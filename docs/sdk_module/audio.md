@@ -821,7 +821,11 @@ lichee/rtos/projects/xxx/src .
 
 ```c
 struct sunxi_dma_params {
-	...
+	char *name;
+	dma_addr_t dma_addr;
+	uint32_t src_maxburst;
+	uint32_t dst_maxburst;
+	uint8_t dma_drq_type_num;
 };
 ```
 
@@ -829,10 +833,26 @@ struct sunxi_dma_params {
 
 - `DAUDIO`
 
+I2S/PCM 模块总结构体，包含基础平台资源、特定功能私有参数
+
 ```c
-/* I2S/PCM 模块总结构体，包含基础平台资源、特定功能私有参数*/
 struct sunxi_daudio_info {
-	...
+	struct snd_platform *platform;
+	struct sunxi_daudio_clk clk;
+	struct daudio_pinctrl *pinctrl;
+	uint8_t pinctrl_num;
+	struct pa_config *pa_cfg;
+	uint8_t pa_cfg_num;
+
+	struct sunxi_daudio_param param;
+	struct sunxi_dma_params playback_dma_param;
+	struct sunxi_dma_params capture_dma_param;
+
+	uint8_t global_enable;
+	unsigned int hub_mode;
+	bool playback_en;
+	bool capture_en;
+	int asrc_en;
 };
 ```
 
@@ -895,7 +915,1110 @@ struct sunxi_dmic {
 
 #### AudioCodec
 
+AudioCodec 模块总结构体，包含基础平台资源、特定功能私有参数
 
+```c
+struct sunxi_codec_info {
+	struct snd_codec *codec;
+
+	void *codec_base_addr;
+	struct sunxi_codec_clk clk;
+	struct sunxi_codec_param param;
+
+#ifdef CONFIG_SND_PLATFORM_SUNXI_MAD
+	int capturing;
+	struct sunxi_mad_priv mad_priv;
+#endif
+};
+```
+
+## 软件重要接口
+
+!> 仅说明自定义软件接口，alsa 框架内部接口不做说明。
+
+### pcm 相关接口
+
+#### 创建 pcm 设备
+
+函数原型：
+
+```c
+int sunxi_pcm_new(struct snd_pcm *pcm)
+```
+
+参数:
+
+- pcm: pcm设备信息
+
+返回值:
+
+- 0: 成功
+- 其他:失败
+
+#### 释放 pcm 设备
+
+函数原型
+
+```c
+void sunxi_pcm_free_dma_buffer(struct snd_pcm *pcm, int stream)
+```
+
+参数:
+
+- pcm: pcm设备信息
+- stream: pcm 流信息
+
+返回值: 无
+
+#### 开启 pcm 设备
+
+函数原型:
+
+```c
+int sunxi_pcm_open(struct snd_pcm_substream *substream)
+```
+
+参数:
+
+- substream: pcm 子流信息
+
+返回值:
+
+- 0: 成功
+- 其他:失败
+
+#### 设置 pcm 设备参数
+
+函数原型:
+
+```c
+int sunxi_pcm_hw_params(struct snd_pcm_substream *substream, struct snd_pcm_hw_params *params)
+```
+
+参数:
+
+- substream: pcm 子流信息
+- params: pcm 硬件参数
+
+返回值:
+
+- 0: 成功
+- 其他:失败
+
+#### 触发 pcm 设备运行
+
+函数原型:
+
+```c
+int sunxi_pcm_trigger(struct snd_pcm_substream *substream, int cmd)
+```
+
+参数:
+
+- substream: pcm 子流信息
+- cmd: 触发命令
+
+返回值:
+
+- 0: 成功
+- 其他:失败
+
+#### 获取 pcm 设备帧点
+
+函数原型:
+
+```c
+snd_pcm_uframes_t snd_dmaengine_pcm_pointer(struct snd_pcm_substream *substream)
+```
+
+参数:
+
+- substream: pcm 子流信息
+
+返回值:
+
+- snd_pcm_uframes_t：当前DMA 缓冲指针
+
+### Platform 层接口
+
+#### AudioCodec接口
+
+##### 初始化 DMA 参数
+
+函数原型:
+
+```c
+int sunxi_cpudai_platform_probe(struct snd_platform *platform)
+```
+
+参数:
+
+- platform: platform 信息
+
+返回值:
+
+- 0: 成功
+- 其他:失败
+
+##### 更新设置 DMA 参数
+
+函数原型:
+
+```c
+int sunxi_cpudai_startup(struct snd_pcm_substream *substream, struct snd_dai *dai)
+```
+
+参数:
+
+- substream: pcm 子流信息
+- dai: cpu dai 信息
+
+返回值:
+
+- 0: 成功
+- 其他:失败
+
+#### I2S/PCM接口
+
+##### I2S/PCM 模块休眠（保存寄存器、关闭时钟）
+
+函数原型:
+
+```c
+int sunxi_daudio_suspend(struct pm_device *dev, suspend_mode_t mode)
+```
+
+参数:
+
+- dev: 设备信息
+- mode: 休眠模式
+
+返回值:
+
+- 0: 成功
+- 其他:失败
+
+##### I2S/PCM 模块唤醒（开启时钟、初始化模块、恢复寄存器）
+
+函数原型:
+
+```c
+int sunxi_daudio_resume(struct pm_device *dev, suspend_mode_t mode)
+```
+
+参数:
+
+- dev: 设备信息
+- mode: 休眠模式
+
+返回值:
+
+- 0: 成功
+- 其他:失败
+
+##### 设置模块BCLK 分频系数
+
+函数原型:
+
+```c
+int sunxi_daudio_set_clkdiv(struct snd_dai *dai, int clk_id, int clk_div)
+```
+
+参数:
+
+- dai: cpu dai 信息
+- clk_id: clk 辅助信息
+- clk_div: clk 分频系数
+
+返回值:
+
+- 0: 成功
+- 其他:失败
+
+##### 设置模块工作时钟
+
+函数原型:
+
+```c
+int sunxi_daudio_set_sysclk(struct snd_dai *dai, int clk_id, unsigned int freq, int dir)
+```
+
+参数:
+
+- dai: cpu dai 信息
+- clk_id: clk 辅助信息
+- freq: 时钟频率
+- dir: 时钟输出方向
+
+返回值:
+
+- 0: 成功
+- 其他:失败
+
+##### 设置模块I2S 格式
+
+函数原型:
+
+```c
+int sunxi_daudio_set_fmt(struct snd_dai *dai, unsigned int fmt)
+```
+
+参数:
+
+- dai: cpu dai 信息
+- fmt: I2S 格式信息
+
+返回值:
+
+- 0: 成功
+- 其他:失败
+
+##### 设置模块开启工作资源(DMA 参数、组件功能等)
+
+函数原型:
+
+```c
+int sunxi_daudio_startup(struct snd_pcm_substream *substream, struct snd_dai *dai)
+```
+
+参数:
+
+- substream: pcm 子流信息
+- dai: cpu dai 信息
+
+返回值:
+
+- 0: 成功
+- 其他:失败
+
+##### 设置模块硬件参数
+
+函数原型:
+
+```c
+int sunxi_daudio_hw_params(struct snd_pcm_substream *substream, struct snd_pcm_hw_params *params, struct snd_dai *dai)
+```
+
+参数:
+
+- substream: pcm 子流信息
+- params: 硬件参数
+- dai: cpu dai 信息
+
+返回值:
+
+- 0: 成功
+- 其他:失败
+
+##### 清除模块fifo
+
+函数原型:
+
+```c
+int sunxi_daudio_prepare(struct snd_pcm_substream *substream, struct snd_dai *dai)
+```
+
+参数:
+
+- substream: pcm 子流信息
+- dai: cpu dai 信息
+
+返回值:
+
+- 0: 成功
+- 其他:失败
+
+##### 触发模块工作
+
+函数原型:
+
+```c
+int sunxi_daudio_trigger(struct snd_pcm_substream *substream, int cmd, struct snd_dai *dai)
+```
+
+参数:
+
+- substream: pcm 子流信息
+- cmd: 触发命令
+- dai: cpu dai 信息
+
+返回值:
+
+- 0: 成功
+- 其他:失败
+
+##### 设置模块关闭工作资源(组件功能等)
+
+函数原型:
+
+```c
+void sunxi_daudio_shutdown(struct snd_pcm_substream *substream, struct snd_dai *dai)
+```
+
+参数:
+
+- substream: pcm 子流信息
+- dai: cpu dai 信息
+
+返回值:
+
+- 0: 成功
+- 其他:失败
+
+#### SPDIF
+
+##### 初始化cpu dai (DMA、模块寄存器)
+
+函数原型:
+
+```c
+int sunxi_spdif_dai_probe(struct snd_dai *dai)
+```
+
+参数:
+
+- dai: cpu dai 信息
+
+返回值:
+
+- 0: 成功
+- 其他:失败
+
+##### 模块休眠（保存寄存器、关闭时钟）
+
+函数原型:
+
+```c
+int sunxi_spdif_suspend(struct pm_device *dev, suspend_mode_t mode)
+```
+
+参数：
+
+- dev: 设备信息
+- mode: 休眠模式
+
+返回值:
+
+- 0: 成功
+- 其他:失败
+
+##### 模块唤醒（开启时钟、初始化模块、恢复寄存器）
+
+函数原型:
+
+```c
+int sunxi_spdif_resume(struct pm_device *dev, suspend_mode_t mode)
+```
+
+参数：
+
+- dev: 设备信息
+- mode: 休眠模式
+
+返回值:
+
+- 0: 成功
+- 其他:失败
+
+##### 设置模块分频系数
+
+函数原型：
+
+```c
+int sunxi_spdif_set_clkdiv(struct snd_dai *dai, int clk_id, int clk_div)
+```
+
+参数：
+
+- dai: cpu dai 信息
+- clk_id: clk 辅助信息
+- clk_div: clk 分频系数
+
+返回值:
+
+- 0: 成功
+- 其他:失败
+
+##### 设置模块工作时钟
+
+函数原型：
+
+```c
+int sunxi_spdif_set_sysclk(struct snd_dai *dai, int clk_id, unsigned int freq, int dir)
+```
+
+参数：
+
+- dai: cpu dai 信息
+- clk_id: clk 辅助信息
+- freq: 时钟频率
+- dir: 时钟输出方向
+
+返回值:
+
+- 0: 成功
+- 其他:失败
+
+##### 设置模块开启工作资源(DMA 参数、组件功能等)
+
+函数原型：
+
+```c
+int sunxi_spdif_startup(struct snd_pcm_substream *substream, struct snd_dai *dai)
+```
+
+参数：
+
+- substream: pcm 子流信息
+- dai: cpu dai 信息
+
+返回值:
+
+- 0: 成功
+- 其他:失败
+
+##### 设置模块硬件参数
+
+函数原型：
+
+```c
+int sunxi_spdif_hw_params(struct snd_pcm_substream *substream, struct snd_pcm_hw_params *params, struct snd_dai *dai)
+```
+
+参数：
+
+- substream: pcm 子流信息
+- params: 硬件参数
+- dai: cpu dai 信息
+
+返回值:
+
+- 0: 成功
+- 其他:失败
+
+##### 清除模块fifo，清除中断
+
+函数原型：
+
+```c
+int sunxi_spdif_prepare(struct snd_pcm_substream *substream, struct snd_dai *dai)
+```
+
+参数：
+
+- substream: pcm 子流信息
+- dai: cpu dai 信息
+
+返回值:
+
+- 0: 成功
+- 其他:失败
+
+##### 触发模块工作
+
+函数原型：
+
+```c
+int sunxi_spdif_trigger(struct snd_pcm_substream *substream, int cmd, struct snd_dai *dai)
+```
+
+参数：
+
+- substream: pcm 子流信息
+- cmd: 触发命令
+- dai: cpu dai 信息
+
+返回值:
+
+- 0: 成功
+- 其他:失败
+
+#### DMIC
+
+##### 初始化cpu dai (DMA、模块寄存器)
+
+函数原型：
+
+```c
+int sunxi_dmic_dai_probe(struct snd_dai *dai)
+```
+
+参数：
+
+- dai: cpu dai 信息
+
+返回值:
+
+- 0: 成功
+- 其他:失败
+
+##### 模块休眠（保存寄存器、关闭时钟）
+
+函数原型：
+
+```c
+int sunxi_dmic_suspend(struct pm_device *dev, suspend_mode_t mode)
+```
+
+参数：
+
+- dev: 设备信息
+- mode: 休眠模式
+
+返回值:
+
+- 0: 成功
+- 其他:失败
+
+##### 模块唤醒（开启时钟、恢复寄存器）
+
+函数原型：
+
+```c
+int sunxi_dmic_resume(struct pm_device *dev, suspend_mode_t mode)
+```
+
+参数：
+
+- dev: 设备信息
+- mode: 休眠模式
+
+返回值:
+
+- 0: 成功
+- 其他:失败
+
+##### 设置模块 pll clk
+
+函数原型：
+
+```c
+int sunxi_dmic_set_sysclk(struct snd_dai *dai, int clk_id, unsigned int freq, int dir)
+```
+
+参数：
+
+- dai: cpu dai 信息
+- clk_id: clk 辅助信息
+- freq: 时钟频率
+- dir: 时钟输出方向
+
+返回值:
+
+- 0: 成功
+- 其他:失败
+
+##### 设置模块开启工作资源(DMA 参数、组件功能等)
+
+函数原型：
+
+```c
+int sunxi_dmic_startup(struct snd_pcm_substream *substream, struct snd_dai *dai)
+```
+
+参数：
+
+- substream: pcm 子流信息
+- dai: cpu dai 信息
+
+返回值:
+
+- 0: 成功
+- 其他:失败
+
+##### 设置模块硬件参数
+
+函数原型：
+
+```c
+int sunxi_dmic_hw_params(struct snd_pcm_substream *substream, struct snd_pcm_hw_params *params, struct snd_dai *dai)
+```
+
+参数：
+
+- substream: pcm 子流信息
+- params: 硬件参数
+- dai: cpu dai 信息
+
+返回值:
+
+- 0: 成功
+- 其他:失败
+
+##### 清除模块 fifo，清除中断
+
+函数原型：
+
+```c
+int sunxi_dmic_prepare(struct snd_pcm_substream *substream, struct snd_dai *dai)
+```
+
+参数：
+
+- substream: pcm 子流信息
+- dai: cpu dai 信息
+
+返回值:
+
+- 0: 成功
+- 其他:失败
+
+##### 触发模块工作
+
+函数原型：
+
+```c
+int sunxi_dmic_trigger(struct snd_pcm_substream *substream, int cmd, struct snd_dai *dai)
+```
+
+参数：
+
+- substream: pcm 子流信息
+- cmd: 触发命令
+- dai: cpu dai 信息
+
+返回值:
+
+- 0: 成功
+- 其他:失败
+
+### Codec 层
+
+#### AudioCodec(ADC/DAC)
+
+##### 模块休眠（保存寄存器、关闭时钟）
+
+函数原型：
+
+```c
+int sunxi_codec_suspend(struct pm_device *dev, suspend_mode_t mode)
+```
+
+参数：
+
+- dev: 设备信息
+- mode: 休眠模式
+
+返回值:
+
+- 0: 成功
+- 其他:失败
+
+##### 模块唤醒（开启时钟、恢复寄存器）
+
+函数原型：
+
+```c
+int sunxi_codec_resume(struct pm_device *dev, suspend_mode_t mode)
+```
+
+参数：
+
+- dev: 设备信息
+- mode: 休眠模式
+
+返回值:
+
+- 0: 成功
+- 其他:失败
+
+##### 设置模块时钟
+
+函数原型：
+
+```c
+int sunxi_codec_set_sysclk(struct snd_dai *dai, int clk_id, unsigned int freq, int dir)
+```
+
+参数：
+
+- dai: cpu dai 信息
+- clk_id: clk 辅助信息
+- freq: 时钟频率
+- dir: 时钟输出方向
+
+返回值:
+
+- 0: 成功
+- 其他:失败
+
+##### 设置模块硬件参数
+
+函数原型：
+
+```c
+int sunxi_codec_hw_params(struct snd_pcm_substream *substream, struct snd_pcm_hw_params *params, struct snd_dai *dai)
+```
+
+参数：
+
+- substream: pcm 子流信息
+- params: 硬件参数
+- dai: cpu dai 信息
+
+返回值:
+
+- 0: 成功
+- 其他:失败
+
+##### 清除模块fifo，清除中断
+
+函数原型：
+
+```c
+int sunxi_codec_prepare(struct snd_pcm_substream *substream, struct snd_dai *dai)
+```
+
+参数：
+
+- substream: pcm 子流信息
+- dai: cpu dai 信息
+
+返回值:
+
+- 0: 成功
+- 其他:失败
+
+##### 触发模块工作
+
+函数原型：
+
+```c
+int sunxi_codec_trigger(struct snd_pcm_substream *substream, int cmd, struct snd_dai *dai)
+```
+
+参数：
+
+- name: 声卡名称
+- codec: codec 设备信息
+- platform_type: platform 层设备类型
+
+返回值:
+
+- 0: 成功
+- 其他:失败
+
+### 软件调试接口
+
+| 模块   | 接口              | 命令              |
+| ------ | ----------------- | ----------------- |
+| DMIC   | `cmd_dmic_dump`   | `cmd_dmic_dump`   |
+| SPDIF  | `cmd_spdif_dump`  | `cmd_spdif_dump`  |
+| DAUDIO | `cmd_daudio_dump` | `cmd_daudio_dump` |
+
+## 模块使用
+
+一个声卡的简单测试，包含两部分，分别为声卡的控件设置及音频测试工具的使用。本章节将从以下 4 个通用小节和 1 个外挂 codec 小节介绍声卡如何使用。
+
+1. menuconfig 配置
+2. 声卡设备查看
+3. 声卡控件
+4. 声卡测试工具使用
+5. I2S 外挂 CODEC
+
+### menuconfig 配置
+
+进入menuconfig 界面：
+
+```c
+# 进入RTOS 目录执行以下命令
+mrtos_menuconfig
+```
+
+### 声卡设备查看
+
+可输入以下命令查看系统挂载上的声卡
+
+```c
+~# amixer -l
+============= Sound Card list =============
+card_num card_name
+    0 	audiocodecdac
+    1 	audiocodecadc
+    2 	snddaudio0
+    3 	snddmic
+    4 	sndspdif
+```
+
+?> 可通过在 `card_default.c` 修改 “card_name”  变量，设定声卡名称。
+
+### 声卡控件
+
+具体配置选项，根据芯片平台、内核版本、所需音频模块，各模块的常见使用方法说明和“声卡测试工具使用” 说明。
+
+#### alsa-utils 工具
+
+alsa-utils 主要提供三个工具：
+
+1. aplay: 用于完成与播放相关的操作；
+2. arecord: 用于完成与录音相关的操作；
+3. amixer: 用于设置相关参数。
+
+##### aplay
+
+输入aplay 或aplay -h 可打印出使用方法
+
+```c
+~# aplay
+
+Usage: aplay [OPTION]... [FILE]...
+
+-h, --help help
+	--version print current version
+-l, --list-devices list all soundcards and digital audio devices
+-L, --list-pcms list device names
+-D, --device=NAME select PCM by name
+-q, --quiet quiet mode
+-t, --file-type TYPE file type (voc, wav, raw or au)
+-c, --channels=# channels
+-f, --format=FORMAT sample format (case insensitive)
+-r, --rate=# sample rate
+-d, --duration=# interrupt after # seconds
+...
+```
+
+**查看可以用于播放的声卡**
+
+````c
+~# aplay -l
+**** List of PLAYBACK Hardware Devices ****
+card 0: audiocodec [audiocodec], device 0: soc@03000000:codec_plat-sunxi-snd-codec sunxisnd-codec-0 []
+	Subdevices: 1/1
+	Subdevice #0: subdevice #0
+card 2: snddaudio0 [snddaudio0], device 0: 2032000.daudio0_plat-snd-soc-dummy-dai snd-socdummy-dai-0 []
+	Subdevices: 1/1
+	Subdevice #0: subdevice #0
+````
+
+**用声卡0 设备0 播放test.wav(用 ctrl c 退出)**
+
+```c
+~# aplay -D hw:0,0 test.wav
+Playing WAVE 'test.wav' : Signed 16 bit Little Endian, Rate 8000 Hz, Mono
+
+^C Aborted by signal Interrupt...
+```
+
+##### arecord
+
+输入arecord 或arecord -h 可打印出使用方法
+
+```c
+~# arecord
+
+Usage: arecord [OPTION]... [FILE]...
+
+-h, --help help
+	--version print current version
+-l, --list-devices list all soundcards and digital audio devices
+-L, --list-pcms list device names
+-D, --device=NAME select PCM by name
+-q, --quiet quiet mode
+-t, --file-type TYPE file type (voc, wav, raw or au)
+-c, --channels=# channels
+-f, --format=FORMAT sample format (case insensitive)
+-r, --rate=# sample rate
+-d, --duration=# interrupt after # seconds
+-M, --mmap mmap stream
+-N, --nonblock nonblocking mode
+-F, --period-time=# distance between interrupts is # microseconds
+-B, --buffer-time=# buffer duration is # microseconds
+```
+
+**查看可以用于录音的声卡**
+
+```c
+~# arecord -l
+
+**** List of CAPTURE Hardware Devices ****
+card 0: audiocodec [audiocodec], device 0: soc@03000000:codec_plat-sunxi-snd-codec sunxisnd-codec-0 []
+	Subdevices: 1/1
+	Subdevice #0: subdevice #0
+card 1: snddmic [snddmic], device 0: 2031000.dmic_plat-snd-soc-dummy-dai snd-soc-dummy-dai-0 []
+	Subdevices: 1/1
+	Subdevice #0: subdevice #0
+card 2: snddaudio0 [snddaudio0], device 0: 2032000.daudio0_plat-snd-soc-dummy-dai snd-socdummy-dai-0 []
+	Subdevices: 1/1
+	Subdevice #0: subdevice #0
+...
+```
+
+**用声卡1 的设备0 进行采样位数为16 的录音，并把数据保存在test.wav(用ctrl c 退出)**
+
+```c
+~# arecord -D hw:1,0 -f S16_LE test.wav
+
+Recording WAVE 'test.wav' : Signed 16 bit Little Endian, Rate 8000 Hz, Mono
+
+^C Aborted by signal Interrupt...
+```
+
+##### amixer
+
+输入amixer 或amixer -h 可打印出使用方法
+
+```c
+~# amixer -h
+
+Usage: amixer <options> [command]
+
+Available options:
+-h,--help this help
+-c,--card N select the card
+-D,--device N select the device, default 'default'
+-d,--debug debug mode
+-n,--nocheck do not perform range checking
+-v,--version print version of this program
+-q,--quiet be quiet
+-i,--inactive show also inactive controls
+-a,--abstract L select abstraction level (none or basic)
+-s,--stdin Read and execute commands from stdin sequentially
+-R,--raw-volume Use the raw value (default)
+-M,--mapped-volume Use the mapped volume
+
+Available commands:
+scontrols show all mixer simple controls
+scontents show contents of all mixer simple controls (default command)
+sset sID P set contents for one mixer simple control
+sget sID get contents for one mixer simple control
+controls show all controls for given card
+contents show contents of all controls for given card
+cset cID P set control contents for one control
+cget cID get control contents for one control
+```
+
+**查看声卡 1 的控件**
+
+```c
+~# amixer -c 1 scontrols
+
+Simple mixer control 'L0 volume',0
+Simple mixer control 'L1 volume',0
+Simple mixer control 'L2 volume',0
+Simple mixer control 'L3 volume',0
+Simple mixer control 'R0 volume',0
+Simple mixer control 'R1 volume',0
+Simple mixer control 'R2 volume',0
+Simple mixer control 'R3 volume',0
+Simple mixer control 'rx sync mode',0
+```
+
+**查看声卡 1 的控件的具体配置**
+
+```c
+~# amixer -c 1 scontents
+Simple mixer control 'L0 volume',0
+    Capabilities: volume volume-joined
+    Playback channels: Mono
+    Capture channels: Mono
+    Limits: 0 - 255
+    Mono: 176 [69%]
+Simple mixer control 'L1 volume',0
+    Capabilities: volume volume-joined
+    Playback channels: Mono
+    Capture channels: Mono
+    Limits: 0 - 255
+    Mono: 176 [69%]
+Simple mixer control 'L2 volume',0
+    Capabilities: volume volume-joined
+    Playback channels: Mono
+    Capture channels: Mono
+    Limits: 0 - 255
+    Mono: 176 [69%]
+...
+```
+
+**设置声卡 1 第一个控件的值**
+
+```c
+# 拿到声卡1所有控件
+~# amixer -c 1 controls
+numid=2,iface=MIXER,name='L0 volume'
+numid=4,iface=MIXER,name='L1 volume'
+numid=6,iface=MIXER,name='L2 volume'
+numid=8,iface=MIXER,name='L3 volume'
+numid=3,iface=MIXER,name='R0 volume'
+numid=5,iface=MIXER,name='R1 volume'
+numid=7,iface=MIXER,name='R2 volume'
+numid=9,iface=MIXER,name='R3 volume'
+numid=1,iface=MIXER,name='rx sync mode'
+
+# 拿到控件内容
+~# amixer cget numid=2,iface=MIXER,name='L0 volume'
+numid=2,iface=MIXER,name='rx sync mode'
+    ; type=ENUMERATED,access=rw------,values=1,items=2
+    ; Item #0 'Off'
+    ; Item #1 'On'
+    : values=0
+
+# 设置控件值
+~# amixer cset numid=2,iface=MIXER,name='L0 volume' 1
+numid=2,iface=MIXER,name='rx sync mode'
+    ; type=ENUMERATED,access=rw------,values=1,items=2
+    ; Item #0 'Off'
+    ; Item #1 'On'
+    : values=1
+```
+
+### I2S 外挂CODEC
+
+#### 硬件连接
+
+确保外部CODEC 芯片与SoC I2S 接口正确连接，具体确认连接如下。
+
+- LRCK, BCLK: 确认该两线是否连接；
+- MCLK: 确认外部CODEC 是否需要MCLK，若需要，则确认MCLK 信号线连接；
+- DIN: 确认外部CODEC 是否需要录音功能，若需要，则确认DIN 信号线连接；
+- DOUT: 确认外部 CODEC 是否需要播放功能，若需要，则确认 DOUT 信号线连接。
+
+#### 获取外部 CODEC I2S 协议格式
+
+确认外部 CODEC I2S 协议格式如下。
+
+1.	功能需求：只录音、只播放、录音播放；
+2.	引脚确认：I2S 序号、data 引脚序号；
+3.	主从模式：SoC 作主（由 SoC 提供 BCLK,LRCK）、外挂 CODEC 作主（由外挂 CODEC提供 BCLK,LRCK）；
+4.	I2S 模式：标准 I2S、I2S_L、I2S_R、DSP_A、DSP_B；
+5.	LRCK 信号是否翻转；
+6.	BCLK 信号是否翻转；
+7.	MCLK 信号：MCLK 频率；
+8.	slot 个数：最高要支持多少 slot（音频通道数）；
+9.	slot 宽度：最高要支持多少 slot 宽度（音频采样位深）。
+
+查看 “模块介绍” 说明的 “AHUB” 或 “I2S/PCM” -> “sys_conf 配置” 中的配置项说明，根据 I2S 协议格式进行配置。
+
+## FAQ
+
+### 常见问题
+
+若下列问题无法解决您所遇到的问题，请到 [全志在线开发者论坛](https://bbs.aw-ol.com/) 发帖询问
+
+#### 录音或播放变速
+
+1. 确认录音和播放采样率和父时钟 PLL_AUDIO 是否属于同一频段。
+
+#### AudioCodec 输入输出无声音
+
+1. 确认通路设置。
+
+   通过 amixer 查看 route 状态，确认是否设置了需要的上下电通路。
+
+2. 对于喇叭，确认功放芯片使能设置。
+
+   查看驱动源码中 gpio_spk 的 GPIO 配置并和硬件原理图比对，确认是否适配了对应的 GPIO。
+
+#### DMIC 录音异常（静音/通道移位）
+1. 确认GPIO 是否正常。
+
+   1. 通过DataSheet 核对sys_config.fex 部分的DMIC Pin 设置；
+   2. 若sys_config.fex 不支持引脚设置，则到dmic-sun20iw2.h 直接查看g_dmic_gpio 结构
+      体的设置
+
+2. 确认CLK 的频率。
+
+   以上正常情况下，示波器查看DMIC CLK 的频率是否满足`clk_rate = sample * over_sample_rate`关系。
+
+3. 排查硬件连接和DMIC 物料问题。
 
 ## 其他
 
