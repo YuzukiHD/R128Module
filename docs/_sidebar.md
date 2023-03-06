@@ -30,7 +30,7 @@
 
 - SDK模块开发指南
   - [Audio](sdk_module/audio.md)
-  - [CCU](sdk_module/ccu.md)
+  #- [CCU](sdk_module/ccu.md)
   - [CE](sdk_module/ce.md)
   - [CSI](sdk_module/csi.md)
   - [DMAC](sdk_module/dmac.md)
