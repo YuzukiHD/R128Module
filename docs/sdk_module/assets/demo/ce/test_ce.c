@@ -1,237 +1,35 @@
-# Crypto Engine
+/*
+ * Copyright (c) 2019-2025 Allwinner Technology Co., Ltd. ALL rights reserved.
+ *
+ * Allwinner is a trademark of Allwinner Technology Co.,Ltd., registered in
+ * the the people's Republic of China and other countries.
+ * All Allwinner Technology Co.,Ltd. trademarks are used with permission.
+ *
+ * DISCLAIMER
+ * THIRD PARTY LICENCES MAY BE REQUIRED TO IMPLEMENT THE SOLUTION/PRODUCT.
+ * IF YOU NEED TO INTEGRATE THIRD PARTY’S TECHNOLOGY (SONY, DTS, DOLBY, AVS OR
+ * MPEGLA, ETC.) IN ALLWINNERS’SDK OR PRODUCTS, YOU SHALL BE SOLELY RESPONSIBLE
+ * TO OBTAIN ALL APPROPRIATELY REQUIRED THIRD PARTY LICENCES. ALLWINNER SHALL
+ * HAVE NO WARRANTY, INDEMNITY OR OTHER OBLIGATIONS WITH RESPECT TO MATTERS
+ * COVERED UNDER ANY REQUIRED THIRD PARTY LICENSE.
+ * YOU ARE SOLELY RESPONSIBLE FOR YOUR USAGE OF THIRD PARTY’S TECHNOLOGY.
+ *
+ *
+ * THIS SOFTWARE IS PROVIDED BY ALLWINNER"AS IS" AND TO THE MAXIMUM EXTENT
+ * PERMITTED BY LAW, ALLWINNER EXPRESSLY DISCLAIMS ALL WARRANTIES OF ANY KIND,
+ * WHETHER EXPRESS, IMPLIED OR STATUTORY, INCLUDING WITHOUT LIMITATION REGARDING
+ * THE TITLE, NON-INFRINGEMENT, ACCURACY, CONDITION, COMPLETENESS, PERFORMANCE
+ * OR MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+ * IN NO EVENT SHALL ALLWINNER BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS, OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
-## 模块介绍
-
-CE 模块主要支持对称算法、非对称算法、摘要算法进行数据的加密和解密功能。
-
-CE 模块主要支持的算法如下：
-
-- AES 算法 ECB/CBC/CTR/CTS/OFB/CFB/CBC-MAC/XTS 等模式.
-- HASH 算法 MD5/SHA1/SHA224/SHA256/SHA384/SHA512/HMAC-SHA1/HMAC-SHA256.
-- 非对称算法 RSA512/1024/2048/3072/4096.
-
-## 模块配置
-
-其menuconfig 的配置如下：
-
-```shell
-Kernel Setup --->
-    Drivers Setup --->
-        SoC HAL Drivers --->
-            CE devices --->
-                [*] enable ce driver
-                [*] enbale ce hal APIs Test command
-```
-
-## 源码结构
-
-CE 驱动位于 `source/drivers/hal/source/ce/` 目录下。
-
-```c
-hal/
-├── source
-│ ├── ce
-│ │ ├── ce_common.c    # CE公用操作接口函数文件
-│ │ ├── ce_common.h    # CE操作接口函数头文件
-│ │ ├── hal_ce.c       # CE底层驱动文件
-│ │ ├── hal_ce.h       # CE底层驱动头文件
-│ │ ├── Makefile
-│ │ └── platform.h     # 平台配置头文件
-| ├── platform
-│ └── ce_sun20iw2.h    # 具体的平台配置头文件
-├── include/hal
-  └── sunxi_hal_ce.h   # CE公用操作接口函数头文件
-```
-
-## 模块接口说明
-
-头文件
-
-```c
-#include <sunxi_hal_ce.h>
-```
-
-### CE 初始化接口
-
-CE 模块初始化，主要申请中断、clk 初始化等
-
-函数原型：
-
-```c
-int sunxi_ce_init(void)
-```
-
-参数：
-
-- 无
-
-返回值：
-
-- 0：成功
-- 负数：失败
-
-### CE 去初始化接口
-
-CE 模块去初始化，主要注销中断等
-
-函数原型：
-
-```c
-int sunxi_ce_uninit(void)
-```
-
-参数：
-
-- 无
-
-返回值：
-
-- 0：成功
-- 负数：失败
-
-### AES 算法加解密接口
-
-主要实现对 AES 算法进行加解密
-
-函数原型：
-
-```c
-int do_aes_crypto(crypto_aes_req_ctx_t *req_ctx)
-```
-
-参数：
-
-- req_ctx: 为 AES 算法上下文的结构体
-
-返回值：
-
-- 0：成功
-- 负数：失败
-
-```c
-typedef struct {
-    uint8_t *src_buffer;
-    uint32_t src_length;
-    uint8_t *dst_buffer;
-    uint32_t dst_length;
-    uint8_t *iv;
-    uint8_t *iv_next;
-    uint8_t *key;
-    uint32_t key_length;
-    __aligned(CACHELINE_LEN) uint8_t padding[AES_BLOCK_SIZE];
-    uint32_t padding_len;
-    uint32_t dir; 			/*0--加密，1--解密*/
-    uint32_t mode; 			/*AES算法的模式*/
-    uint32_t bitwidth;
-} crypto_aes_req_ctx_t;
-```
-
-## HASH 算法运算接口
-
-主要实现对HASH 算法进行运算
-
-函数原型：
-
-```c
-int do_hash_crypto(crypto_hash_req_ctx_t *req_ctx)
-```
-
-参数：
-
-- req_ctx: 为HASH 算法上下文的结构体
-
-返回值：
-
-- 0：成功
-- 负数：失败
-
-```c
-typedef struct {
-    uint8_t *src_buffer;
-    uint32_t src_length;
-    uint8_t *dst_buffer;
-    uint32_t dst_length;
-    __aligned(CACHELINE_LEN) uint8_t md[SHA_MAX_DIGEST_SIZE];
-    uint32_t md_size;
-    __aligned(CACHELINE_LEN) uint8_t padding[SHA512_BLOCK_SIZE * 2];
-    uint32_t padding_len;
-    uint32_t type; 			/*hash算法的模式*/
-    uint32_t dir;
-    uint32_t padding_mode; 	/*hash算法的填充模式*/
-} crypto_hash_req_ctx_t;
-```
-
-## RSA 算法运算接口
-
-主要实现对RSA 算法进行加解密
-
-函数原型：
-
-```c
-int do_rsa_crypto(crypto_rsa_req_ctx_t *req_ctx)
-```
-
-参数：
-
-- req_ctx: 为 RSA算法上下文的结构体
-
-返回值：
-
-- 0：成功
-- 负数：失败
-
-```
-typedef struct {
-    uint8_t *key_n; /*公钥模数*/
-    uint32_t n_len;
-    uint8_t *key_e; /*公钥指数*/
-    uint32_t e_len;
-    uint8_t *key_d; /*私钥*/
-    uint32_t d_len;
-    uint8_t *src_buffer;
-    uint32_t src_length;
-    uint8_t *dst_buffer;
-    uint32_t dst_length;
-    uint32_t dir; /*0--加密，1--解密*/
-    uint32_t type; /*RSA算法的模式*/
-    uint32_t bitwidth; /*RSA算法位宽*/
-} crypto_rsa_req_ctx_t;
-```
-
-## RNG 算法运算接口
-
-主要实现随机数的生成
-
-函数原型：
-
-```c
-int do_rng_gen(crypto_rsa_req_ctx_t *req_ctx)
-```
-
-参数：
-
-- req_ctx: 为 RNG 算法上下文的结构体
-
-返回值：
-
-- 0：成功
-- 负数：失败
-
-```c
-typedef struct {
-    uint8_t *rng_buf;
-    uint32_t rng_len;
-    uint32_t mode;
-    uint8_t *key;
-    uint32_t key_len;
-} crypto_rng_req_ctx_t;
-```
-
-## 模块使用范例
-
-由于测试用例较大，所以将其拆分进入一个头文件内，可以从这里下载：[test_ce.h](assets/demo/ce/test_ce.h)
-
-```c
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -995,5 +793,3 @@ int cmd_test_ce(int argc, const char *argv[]) {
 }
 
 FINSH_FUNCTION_EXPORT_CMD(cmd_test_ce, hal_ce, tina rtos ce test demo)
-```
-
