@@ -180,20 +180,20 @@ int do_rsa_crypto(crypto_rsa_req_ctx_t *req_ctx)
 - 0：成功
 - 负数：失败
 
-```
+```c
 typedef struct {
-    uint8_t *key_n; /*公钥模数*/
+    uint8_t *key_n;    /*公钥模数*/
     uint32_t n_len;
-    uint8_t *key_e; /*公钥指数*/
+    uint8_t *key_e;    /*公钥指数*/
     uint32_t e_len;
-    uint8_t *key_d; /*私钥*/
+    uint8_t *key_d;    /*私钥*/
     uint32_t d_len;
     uint8_t *src_buffer;
     uint32_t src_length;
     uint8_t *dst_buffer;
     uint32_t dst_length;
-    uint32_t dir; /*0--加密，1--解密*/
-    uint32_t type; /*RSA算法的模式*/
+    uint32_t dir;      /*0--加密，1--解密*/
+    uint32_t type;     /*RSA算法的模式*/
     uint32_t bitwidth; /*RSA算法位宽*/
 } crypto_rsa_req_ctx_t;
 ```
@@ -794,9 +794,7 @@ int rsa_test(void) {
       goto out;
     }
 
-    printf(
-        "############RSA SIGN/VERIFY SHA256, len: %d, pass#############\n\n\n",
-        rsa_bitwidth[i]);
+    printf("############RSA SIGN/VERIFY SHA256, len: %d, pass#############\n\n\n",rsa_bitwidth[i]);
   }
 
   /* rsa sign/verify */
