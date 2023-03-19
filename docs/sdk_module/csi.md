@@ -41,7 +41,9 @@ Online 分块模式与整帧模式的区别在于，分块模式可以在 JPEG �
 
 ##### offline 模式
 
-Offline 模式的通路框图如下图所示：![image-20230319171115198](assets/post/csi/image-20230319171115198.png)
+Offline 模式的通路框图如下图所示：
+
+![image-20230319171115198](assets/post/csi/image-20230319171115198.png)
 
 Offline 模式下，CSI 会将 YUV420 的原始图像数据存储到 YUV memory 中，存放格式为NV12。一帧图像全部存完后，产生写回中断 (wb finish)，然后由软件启动 JPEG 开始编码， JPEG 编码器会读取 YUV memory 中的原始数据送给 Encoder 进行编码，编码后的数据写到JPEG memory 中。
 
