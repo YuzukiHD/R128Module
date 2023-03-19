@@ -1,0 +1,60 @@
+- 概述
+
+  - [芯片简介](r128/about_chip.md)
+  - [获取芯片资料](r128/get_chip_ds.md)
+  - [芯片物料支持列表](r128/chip_support_list.md)
+  - [测试固件下载](r128/test_img.md)
+  
+- 硬件设计
+
+  - [模组硬件设计指南](hardware/module_hardware_design.md)
+  - [芯片硬件设计指南](hardware/hardware_design.md)
+  - [硬件设计参考](hardware/ref_hardware_design.md)
+  
+- SDK入门
+  - [开发环境搭建](r128/sdk_intro/prepare_dev_env.md)
+  - [获取SDK](r128/sdk_intro/get_sdk.md)
+  - [SDK开发入门](r128/sdk_intro/sdk_intro.md)
+  - [固件编译](r128/sdk_intro/setup_img.md)
+  - [固件烧录](r128/sdk_intro/flash_img.md)
+  
+- 软件入门
+  - [快速开发入门](r128/quick_start.md)
+
+- 基础组件开发指南
+  - [多媒体](sdk_base/multi-media.md)
+  - [音频框架](sdk_base/audio.md)
+  
+- 应用开发案例
+  - [LVGL](demo/lvgl.md)
+
+- SDK模块开发指南
+  - [Audio](sdk_module/audio.md)
+  - [CCU](sdk_module/ccu.md)
+  - [CE](sdk_module/ce.md)
+  - [CSI](sdk_module/csi.md)
+  - [DMAC](sdk_module/dmac.md)
+  - [Flash](sdk_module/flash.md)
+  - [GPADC](sdk_module/gpadc.md)
+  - [GPIO](sdk_module/gpio.md)
+  - [HWSPINLOCK](sdk_module/spin.md)
+  - [IR](sdk_module/ir.md)
+  - [LEDC](sdk_module/ledc.md)
+  - [UART](sdk_module/uart.md)
+  - [MBUS](sdk_module/mbus.md)
+  - [MMC](sdk_module/mmc.md)
+  - [MSGBOX](sdk_module/msgbox.md)
+  - [PWM](sdk_module/pwm.md)
+  - [RTC](sdk_module/rtc.md)
+  - [SID](sdk_module/sid.md)
+  - [Smart Card](sdk_module/smartcard.md)
+  - [SPI](sdk_module/SPI.md)
+  - [SPI LCD](sdk_module/spi_lcd.md)
+  - [USB](sdk_module/usb.md)
+  
+- 应用调试案例
+  - [内存泄漏](debug/memleak.md)
+
+- 其他
+  - [FAQ](others/faq.md)
+  - [术语表](others/term.md)
