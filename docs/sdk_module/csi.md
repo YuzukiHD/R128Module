@@ -323,8 +323,7 @@ void hal_csi_qbuf(void)
 函数原型：
 
 ```c
-unsigned int hal_jpeg_dqbuf(struct csi_ipeg_mem *jpeg_mem, unsigned int
-timeout_msec)
+unsigned int hal_jpeg_dqbuf(struct csi_ipeg_mem *jpeg_mem, unsigned int timeout_msec)
 ```
 
 参数：
