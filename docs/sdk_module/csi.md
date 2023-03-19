@@ -336,7 +336,7 @@ unsigned int hal_jpeg_dqbuf(struct csi_ipeg_mem *jpeg_mem, unsigned int timeout_
 - 正数代表成功，返回csi_mem
 - 负数代表失败
 
-### CSI buffer 入队
+### JPEG buffer 入队
 
 将User 空间已经处理过的buffer，重新入队，移交给JPEG driver，等待填充数据。
 
