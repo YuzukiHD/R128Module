@@ -21,21 +21,21 @@
 - 软件入门
   - [快速开发入门](r128/quick_start.md)
 
-- 基础组件开发指南
-  - [多媒体](sdk_base/multi-media.md)
-  - [音频框架](sdk_base/audio.md)
-  
 - 应用开发案例
   - [LVGL](demo/lvgl.md)
 
-- SDK模块开发指南
-  - [Audio](sdk_module/audio.md)
+- 基础组件开发指南
+  - [多媒体](sdk_base/multi-media.md)
+  - [音频框架](sdk_base/audio.md)
+
+- SDK HAL 模块开发指南
   - [CE](sdk_module/ce.md)
   - [CSI](sdk_module/csi.md)
   - [DMAC](sdk_module/dmac.md)
   - [Flash](sdk_module/flash.md)
   - [GPADC](sdk_module/gpadc.md)
   - [GPIO](sdk_module/gpio.md)
+  - [G2D](sdk_module/gpio.md)
   - [HWSPINLOCK](sdk_module/spin.md)
   - [IR](sdk_module/ir.md)
   - [LEDC](sdk_module/ledc.md)
