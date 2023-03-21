@@ -25,7 +25,7 @@
   - [LVGL](demo/lvgl.md)
 
 - 基础组件开发指南
-  - [资源划分与1启动管理](sdk_base/boot_up.md)
+  - [资源划分与启动管理](sdk_base/boot_up.md)
   - [多媒体](sdk_base/multi-media.md)
   - [音频框架](sdk_base/audio.md)
 
