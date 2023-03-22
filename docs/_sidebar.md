@@ -20,12 +20,15 @@
   
 - 软件入门
   - [快速开发入门](r128/quick_start.md)
+  - [编写HelloWorld](r128/hello_world.md)
+
+- 软件配置
+  - [资源划分与启动管理](sdk_base/boot_up.md)
 
 - 应用开发案例
   - [LVGL](demo/lvgl.md)
 
 - 基础组件开发指南
-  - [资源划分与启动管理](sdk_base/boot_up.md)
   - [多媒体](sdk_base/multi-media.md)
   - [音频框架](sdk_base/audio.md)
 
