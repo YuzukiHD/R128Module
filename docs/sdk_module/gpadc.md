@@ -11,7 +11,7 @@ GPADC 是 12bit 采集精度的模数转换模块，支持 4 路通道，模拟�
 
 一般来说 GPADC 接口用于 KEY 模块按键的读取，一般包括 VOL+、VOL-、HOME、MENU、ENTER 等等，GPADC0 用于 KEY 的电路如上图。AVCC-AP 为 1.8V 的供电，不同的按键按下，GPADC 口的电压不同，CPU 通过对这个电压的采样来确定具体是那一个按键按下。如下图，VOL+、VOL-、MENU、ENTER、HOME对应的电压分别为 0.21V、0.41V、0.59V、0.75V、0.88V。
 
-![image-20230320114222982](assets/post/gpdac/image-20230320114222982.png)
+![image-20230320114222982](assets/post/gpadc/image-20230320114222982.png)
 
 ## 模块配置
 

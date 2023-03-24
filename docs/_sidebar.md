@@ -42,7 +42,7 @@
   - [G2D](sdk_module/gpio.md)
   - [HWSPINLOCK](sdk_module/spin.md)
   - [IR](sdk_module/ir.md)
-  - [LEDC](sdk_module/ledc.md)
+  - [LEDC (RGB LED)](sdk_module/ledc.md)
   - [UART](sdk_module/uart.md)
   - [MBUS](sdk_module/mbus.md)
   - [MMC](sdk_module/mmc.md)
