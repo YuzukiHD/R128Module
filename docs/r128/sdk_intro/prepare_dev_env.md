@@ -1,12 +1,17 @@
 # 开发环境搭建
 
-SDK 是在 Ubuntu 开发测试的，因此我们推荐使用 Ubuntu 主机环境进行源码编译，非 Ubuntu 主机环境的用户，可以使用跨平台开源的虚拟机软件 Oracle VM VirtualBox 安装 Linux 虚拟机，搭建 Ubuntu 环境。
+系统需求：
 
-> 并不强求必须在虚拟机中编译，也可以本机实体机安装 Ubuntu 系统进行编译、编译服务器编译、docker环境编译或者使用 WSL2 编译（WSL1不支持）。
+- 需要 x64 位处理器和操作系统
+- 操作系统: Windows 10（WSL2），Docker，Linux (必须为64bit)
+- 处理器: Intel Pentium Processor E2160
+- 内存: 2 GB RAM
 
-这里以常用的几款 Linux 发行版作为示例，搭建开发环境。
+## Linux 搭建开发环境
 
-## Ubuntu 22.04 / 20.04
+这里以常用的几款 Linux 发行版作为示例，搭建开发环境：
+
+### Ubuntu 22.04 / 20.04
 
 1. 更新软件源，更新系统软件包
 
@@ -41,7 +46,7 @@ sudo apt install gcc-multilib
 sudo apt install libc6:i386 libstdc++6:i386 lib32z1
 ```
 
-## Ubuntu 18.04
+### Ubuntu 18.04
 1. 更新软件源，更新系统软件包
 
 ```shell
@@ -75,7 +80,7 @@ sudo apt install gcc-multilib
 sudo apt install libc6:i386 libstdc++6:i386 lib32z1
 ```
 
-## Arch Linux / Manjaro
+### Arch Linux / Manjaro
 
 1. 更新软件源，更新系统软件包
 
@@ -101,15 +106,17 @@ pacman -S --needed libelf libtool libxslt m4 make ncurses openssl patch pkgconf 
 pacman -S --needed multilib-devel
 ```
 
-## CentOS / Fedora / openEuler
+### CentOS / Fedora / openEuler
 
 ```shell
 sudo dnf --setopt install_weak_deps=False --skip-broken install bash-completion bzip2 gcc gcc-c++ git make ncurses-devel patch rsync tar unzip wget which diffutils python2 python3 perl-base perl-Data-Dumper perl-File-Compare perl-File-Copy perl-FindBin perl-Thread-Queue glibc.i686
 ```
 
-## openSUSE
+### openSUSE
 
 ```shell
 sudo zypper install --no-recommends asciidoc bash bc binutils bzip2 fastjar flex gawk gcc gcc-c++ gettext-tools git git-core intltool libopenssl-devel libxslt-tools make mercurial ncurses-devel patch perl-ExtUtils-MakeMaker python-devel rsync sdcc unzip util-linux wget zlib-devel glibc-devel-32bit
 ```
+
+## Docker 搭建开发环境
 
