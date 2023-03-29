@@ -60,8 +60,8 @@ R128 系统的烧写流程如下：
 
 1. 片内引导 BROM 初始化芯片，识别到 PA1，PA2 脚为 USB 烧录模式，初始化 USB
 2. 上位机通过 USB 烧写 BOOT0 到 SRAM 中，并运行 BOOT0
-3. BOOT0 初始化 LSPSRAM 和 HSPSRAM，返回完成信号等待上位机下载 BOOT1（U-Boot）
-4. 上位机收到信号，下载 BOOT1（U-Boot）到 LSPSRAM 中，并引导运行 BOOT1（U-Boot）
+3. BOOT0 初始化 PSRAM，返回完成信号等待上位机下载 BOOT1（U-Boot）
+4. 上位机收到信号，下载 BOOT1（U-Boot）到 PSRAM 中，并引导运行 BOOT1（U-Boot）
 5. BOOT1（U-Boot） 初始化系统资源，初始化内部 SPI NOR，USB2.0 等资源，等待上位机下载
 6. 上位机下发固件，进入烧写模式
 
