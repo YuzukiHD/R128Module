@@ -2,14 +2,13 @@
 
   - [芯片简介](r128/about_chip.md)
   - [获取芯片资料](r128/get_chip_ds.md)
-  - [芯片物料支持列表](r128/chip_support_list.md)
   - [测试固件下载](r128/test_img.md)
   
 - 硬件设计
-
   - [模组硬件设计指南](hardware/module_hardware_design.md)
   - [芯片硬件设计指南](hardware/hardware_design.md)
   - [硬件设计参考](hardware/ref_hardware_design.md)
+  - [芯片物料支持列表](hardware/chip_support_list.md)
   
 - SDK入门
   - [开发环境搭建](r128/sdk_intro/prepare_dev_env.md)
@@ -44,6 +43,7 @@
   - [IR](sdk_module/ir.md)
   - [LEDC (RGB LED)](sdk_module/ledc.md)
   - [UART](sdk_module/uart.md)
+  - [LPUART](sdk_module/lpuart.md)
   - [MBUS](sdk_module/mbus.md)
   - [MMC](sdk_module/mmc.md)
   - [MSGBOX](sdk_module/msgbox.md)
