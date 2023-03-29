@@ -134,7 +134,7 @@ pwm_status_t hal_pwm_deinit(void)
 
 ## 模块使用范例
 
-```C
+```c
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
