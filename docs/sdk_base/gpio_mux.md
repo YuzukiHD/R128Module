@@ -315,24 +315,33 @@ dram_no_lpsram = 0x0
 
 SPI LCD  配置
 
-| 配置项          | 配置项含义              |
-| --------------- | ----------------------- |
-| lcd_used        | 启用 LCD                |
-| lcd_model_name  | lcd类型                 |
-| lcd_driver_name | lcd面板驱动名称         |
-| lcd_x           | lcd X像素               |
-| lcd_y           | lcd Y像素               |
-| lcd_width       | lcd 物理宽度（单位mm）  |
-| lcd_height      | lcd 物理高度（单位mm）  |
-| lcd_data_speed  | lcd 数据速率            |
-| lcd_pwm_used    | lcd 背光使用 pwm        |
-| lcd_pwm_ch      | lcd 背光使用的 pwm 通道 |
-| lcd_pwm_freq    | lcd 背光使用的频率      |
-| lcd_pwm_pol     | lcd 背光使用的相位      |
-|                 |                         |
-|                 |                         |
-|                 |                         |
-|                 |                         |
-|                 |                         |
-|                 |                         |
-|                 |                         |
+!> SPI LCD 配置项目较多，部分详细描述可以参照 [显示框架](/sdk_base/disp)
+
+| 配置项           | 配置项含义                                                   |
+| ---------------- | ------------------------------------------------------------ |
+| lcd_used         | 启用 LCD                                                     |
+| lcd_model_name   | lcd 屏模型名字，非必须，可以用于同个屏驱动中进一步区分不同屏。 |
+| lcd_driver_name  | lcd面板驱动名称，必须与屏驱动中`strcut __lcd_panel`变量的`name`成员一致。 |
+| lcd_x            | lcd X像素                                                    |
+| lcd_y            | lcd Y像素                                                    |
+| lcd_width        | lcd 物理宽度（单位mm）                                       |
+| lcd_height       | lcd 物理高度（单位mm）                                       |
+| lcd_data_speed   | lcd 数据速率                                                 |
+| lcd_pwm_used     | lcd 背光使用 pwm                                             |
+| lcd_pwm_ch       | lcd 背光使用的 pwm 通道                                      |
+| lcd_pwm_freq     | lcd 背光使用的频率                                           |
+| lcd_pwm_pol      | lcd 背光使用的相位                                           |
+| lcd_if           | 0：SPI接口（spi 接口就是俗称的 4 线模式，这是因为发送数据时需要额外借助 DC 线来区分命令和数据，与sclk，cs 和 sda 共四线）<br />1：DBI接口（如果设置了 dbi 接口，那么还需要进一步区分 dbi 接口，需要设置lcd_dbi_if） |
+| lcd_pixel_fmt    | 选择传输数据的像素格式                                       |
+| lcd_dbi_fmt      | 0：RGB111<br />1：RGB444<br />2：RGB565<br />3：RGB666<br />4：RGB888 |
+| lcd_dbi_clk_mode | 选择 dbi 时钟的行为模式                                      |
+| lcd_dbi_te       | 使能 te 触发                                                 |
+| fb_buffer_num    | 显示 framebuffer 数量，为了平滑显示，这里一般是 2 个，为了省内存也可以改成 1。 |
+| lcd_dbi_if       | 0：L3I1<br />1：L3I2<br />2：L4I1<br />3：L4I2<br />4：D2L1  |
+| lcd_rgb_order    | 输入图像数据 rgb 顺序识别设置                                |
+| lcd_fps          | 设置屏的刷新率，单位 Hz                                      |
+| lcd_spi_bus_num  | 选择 spi 总线 id                                             |
+| lcd_frm          | frm抖动控制                                                  |
+| lcd_gamma_en     | gamma控制使能                                                |
+| lcd_backlight    | 背光                                                         |
+| lcd_gpio_0       | 用户定义IO定义，一般作为RST                                  |
