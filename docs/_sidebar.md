@@ -47,7 +47,7 @@
   - [RTC](sdk_module/rtc.md)
   - [SID](sdk_module/sid.md)
   - [Smart Card](sdk_module/smartcard.md)
-  - [SPI](sdk_module/SPI.md)
+  - [SPI](sdk_module/spi.md)
   - [USB](sdk_module/usb.md)
 - 应用调试案例
   - [内存泄漏](debug/memleak.md)
