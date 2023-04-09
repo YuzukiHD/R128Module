@@ -24,7 +24,7 @@
 - 应用开发案例
   - [LVGL](demo/lvgl.md)
 - 基础组件开发指南
-  - [多媒体](sdk_base/multi-media.md)
+  - [多媒体](sdk_base/multimedia.md)
   - [音频框架](sdk_base/audio.md)
   - [显示框架](sdk_base/disp.md)
 - SDK HAL 模块开发指南
@@ -34,7 +34,7 @@
   - [Flash](sdk_module/flash.md)
   - [GPADC](sdk_module/gpadc.md)
   - [GPIO](sdk_module/gpio.md)
-  - [G2D](sdk_module/gpio.md)
+  - [G2D](sdk_module/g2d.md)
   - [HWSPINLOCK](sdk_module/spin.md)
   - [IR](sdk_module/ir.md)
   - [LEDC (RGB LED)](sdk_module/ledc.md)
