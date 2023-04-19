@@ -42,13 +42,13 @@ R128是一颗专为“音视频解码”而打造的全新高集成度 SoC，主
       - Supports prefetching read passage 
 
     - LS_PSRAMC:
+      - 8 MB OPI PSRAM for R128-S2 
       - Supports any frequency ratio of AHB and OPI clock 
       - Supports CPU/DMA to operate PSRAM through SBUS 
       - Supports PSRAM Wrap Mode (enter/exit) 
       - Supports APmemory APS3208 and APS6408 and Winbond W95*8 
       - Supports 4 offset address ranges 
       - Supports CBUS out-of-order reading/writing and XIP code execution 
-      - Supports 8 MB OPI PSRAM for R128-S2 
 
   - **SMHC** 
     - Compatible with Secure Digital Memory (SD mem-version 2.0) 
