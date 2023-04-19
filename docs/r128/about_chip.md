@@ -29,6 +29,8 @@ R128是一颗专为“音视频解码”而打造的全新高集成度 SoC，主
   -  **PSRAMC** 
     - Up to 2 PSRAM controllers (HS_PSRAMC, LS_PSRAMC) 
     - HS_PSRAMC:
+      - 8 MB OPI PSRAM for R128-S1/R128-S2.
+      - 32 MB OPI PSRAM for R128-S3. 
       - Supports AP memory PSRAM 
       - Supports 64 Mbit/256 Mbit PSRAM 
       - Supports OPI as the interface of PSRAM 
@@ -38,7 +40,6 @@ R128是一颗专为“音视频解码”而打造的全新高集成度 SoC，主
       - Supports caching reading/writing commands through CAM 
       - Supports out-of-order execution of commands 
       - Supports prefetching read passage 
-      - Supports 8 MB OPI PSRAM for R128-S1, 8MB OPI PSRAM for R128-S2, and 32 MB OPI PSRAM for R128-S3. 
 
     - LS_PSRAMC:
       - Supports any frequency ratio of AHB and OPI clock 
@@ -47,7 +48,7 @@ R128是一颗专为“音视频解码”而打造的全新高集成度 SoC，主
       - Supports APmemory APS3208 and APS6408 and Winbond W95*8 
       - Supports 4 offset address ranges 
       - Supports CBUS out-of-order reading/writing and XIP code execution 
-      - Supports 8 MB OPI PSRAM for R128-S2 and 8 MB OPI PSRAM for R128-S3 
+      - Supports 8 MB OPI PSRAM for R128-S2 
 
   - **SMHC** 
     - Compatible with Secure Digital Memory (SD mem-version 2.0) 
@@ -537,7 +538,7 @@ R128 共有R128-S1、R128-S2 和R128-S3 三个型号，各型号具体配置差�
 | -------------- | ---------------------------------------------- | ---------------------------------------------- | ---------------------------- |
 | CPU            | M33 + C906                                     | M33 + C906                                     | M33 + C906                   |
 | DSP            | HiFi5                                          | HiFi5                                          | HiFi5                        |
-| PSRAM          | 8MB HS-PSRAM                                   | 8MB HS-PSRAM + 8MB LS-PSRAM                    | 32MB HS-PSRAM + 8MB LS-PSRAM |
+| PSRAM          | 8MB HS-PSRAM                                   | 8MB HS-PSRAM + 8MB LS-PSRAM                    | 32MB HS-PSRAM                |
 | FLASH          | 8MB                                            | 16MB                                           | /                            |
 | DAC            | 2 Audio DAC<br />LINEOUTLP/N <br />LINEOUTRP/N | 2 Audio DAC<br />LINEOUTLP/N <br />LINEOUTRP/N | 1 Audio DAC<br />LINEOUTLP/N |
 | GPADC Channels | 7                                              | 7                                              | 8                            |
