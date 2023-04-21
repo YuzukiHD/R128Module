@@ -27,6 +27,7 @@
   - [多媒体](sdk_base/multimedia.md)
   - [音频框架](sdk_base/audio.md)
   - [显示框架](sdk_base/disp.md)
+  - [安全](sdk_base/sos.md)
 - SDK HAL 模块开发指南
   - [CE](sdk_module/ce.md)
   - [CSI](sdk_module/csi.md)
@@ -41,6 +42,9 @@
   - [LEDC (RGB LED)](sdk_module/ledc.md)
   - [UART](sdk_module/uart.md)
   - [LPUART](sdk_module/lpuart.md)
+  
+  - [TWI](sdk_module/twi.md)
+  
   - [TRNG](sdk_module/trng.md)
   - [MBUS](sdk_module/mbus.md)
   - [MMC](sdk_module/mmc.md)
