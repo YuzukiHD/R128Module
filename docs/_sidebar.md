@@ -41,6 +41,7 @@
   - [LEDC (RGB LED)](sdk_module/ledc.md)
   - [UART](sdk_module/uart.md)
   - [LPUART](sdk_module/lpuart.md)
+  - [TRNG](sdk_module/trng.md)
   - [MBUS](sdk_module/mbus.md)
   - [MMC](sdk_module/mmc.md)
   - [MSGBOX](sdk_module/msgbox.md)
