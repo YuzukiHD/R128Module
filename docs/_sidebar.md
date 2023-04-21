@@ -30,6 +30,7 @@
 - SDK HAL 模块开发指南
   - [CE](sdk_module/ce.md)
   - [CSI](sdk_module/csi.md)
+  - [CCU](sdk_module/ccu.md)
   - [DMAC](sdk_module/dmac.md)
   - [Flash](sdk_module/flash.md)
   - [GPADC](sdk_module/gpadc.md)
