@@ -28,6 +28,7 @@
   - [音频框架](sdk_base/audio.md)
   - [显示框架](sdk_base/disp.md)
   - [安全](sdk_base/sos.md)
+  - [异构多核通信](sdk_base/amp.md)
 - SDK HAL 模块开发指南
   - [CE](sdk_module/ce.md)
   - [CSI](sdk_module/csi.md)
