@@ -41,6 +41,13 @@
         }
       },
     };
+
+    window.$docsify.customPageTitle = {
+        prefix:     false,      // [optional] title prefix. default: false eg: prefix: "Application"
+        suffix:     'R128 Documents',      // [optional] title suffix. default: false eg: suffix: "v1.0.0"
+        seprator:   '|',        // [optional] seprator for title eg: title->   prefix | title | suffix
+        debug:      false,      // [optional] should debug
+    };
   </script>
   <!-- Docsify v4 -->
   <script src="//cdn.jsdelivr.net/npm/docsify@4"></script>
@@ -49,6 +56,8 @@
   <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-bash.min.js"></script>
   <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-c.min.js"></script>
   <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/external-script.min.js"></script>
+  <script src="//unpkg.com/docsify-pagination/dist/docsify-pagination.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/@sujaykumarh/docsify-plugin-title@1.x/dist/plugin.min.js"></script>
 </body>
 
 </html>
