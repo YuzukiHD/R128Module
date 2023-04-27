@@ -544,5 +544,5 @@ R128 共有R128-S1、R128-S2 和R128-S3 三个型号，各型号具体配置差�
 | GPADC Channels | 7                                              | 7                                              | 8                            |
 | Package        | QFN80 8*8mm 0.35pitch                          | QFN80 8*8mm 0.35pitch                          | QFN80 8*8mm 0.35pitch        |
 
-请注意，R128-S1、R128-S2引脚封装是相同的，而R128-S3与R128-S1、R128-S2是不同的。具体请参照《R128_PINOUT.xlsx》
+请注意，R128-S1、R128-S2引脚封装是相同的，而 R128-S3 与R128-S1、R128-S2是不同的。具体请参照《R128_PINOUT.xlsx》
 
