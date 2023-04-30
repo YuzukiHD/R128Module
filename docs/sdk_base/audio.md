@@ -30,6 +30,14 @@
 
 另外还具有 MAD 模块，用于语音能量检测，非接口类型。
 
+### 驱动框架
+
+RTOS 上面的音频驱动框架与 Linux 上 ASoC 框架的思想比较类似，分为 codec,platform 模型，core 核心层实现具体的 codec 驱动加载、platform 驱动的选择、数据的搬运、dma 指针的更新等，能够将 codec 驱动与 SoC CPU 解耦合, 方便添加外挂 codec。
+
+音频驱动的大致框架如下：
+
+![image-20230506091129996](assets/post/audio/image-20230506091129996.png)
+
 ### 音频时钟树
 
 R128 音频模块时钟源有4 个系列，分别为24.576MHz、22.5792MHz、8.192MHz 以及高频时钟。
@@ -102,6 +110,30 @@ Drivers Options --->
 ```
 
 其中 `Allwinner AudioCodec DAC Support ` 是 DAC 模块，`Allwinner AudioCodec ADC Support` 是 ADC 模块。
+
+参数配置如下：
+
+```
+[audiocodec]
+dacl_vol = 129 //dac左声道硬件数字音量
+dacr_vol = 129 //dac右声道硬件数字音量
+lineout_vol = 5 //lineout硬件数字音量
+lineoutl_en = 1 //lineout左声道使能
+lineoutr_en = 0 //lineout右声道禁用
+adc1_vol = 129 //adc1硬件数字音量
+adc2_vol = 129 //adc2硬件数字音量
+adc3_vol = 129 //adc3硬件数字音量
+mic1_gain = 19 //mic1硬件增益
+mic2_gain = 19 //mic2硬件增益
+mic3_gain = 0 //mic3硬件增益
+mic1_en = 1 //mic1使能
+mic2_en = 1 //mic2使能
+mic3_en = 1 //mic3使能
+mad_bind_en = 0 //mad禁用
+pa_pin_msleep = 10 //pa开启延时
+pa_pin = port:PB3<1><default><1><1> //pa引脚配置
+capture_cma = 30720 //录音最大缓存配置
+```
 
 ### 声卡控件
 
@@ -1725,6 +1757,43 @@ int sunxi_codec_trigger(struct snd_pcm_substream *substream, int cmd, struct snd
 mrtos_menuconfig
 ```
 
+
+```c
+Drivers Options ‑‑‑>
+    soc related device drivers ‑‑‑>
+        SOUND Devices ‑‑‑>
+            [*] Sound card support
+                AW Sound Compenents ‑‑‑>
+                    Allwinner alsa library (tiny alsa library) ‑‑‑>
+```
+
+还提供 aw‑tiny‑alsa‑lib, 包含了 alsa‑lib 主要的接口，没有任何插件，作用类似于 tinyalsa。aw‑tiny‑alsa‑lib 配置方法：
+
+```
+Drivers Options ‑‑‑>
+    soc related device drivers ‑‑‑>
+        SOUND Devices ‑‑‑>
+            [*] Sound card support
+                AW Sound Compenents ‑‑‑>
+                    Allwinner alsa library (tiny alsa library) ‑‑‑>
+```
+
+音频工具 aw‑alsa‑utils 相关配置项：
+
+```
+Drivers Options ‑‑‑>
+    soc related device drivers ‑‑‑>
+        SOUND Devices ‑‑‑>
+            [*] Sound card support
+                AW Sound Compenents ‑‑‑>
+                    [*] alsa library utils select
+                    [*] alsa library utils amixer
+                    [*] alsa library utils aplay
+                    [*] alsa library utils arecord
+                    [ ] alsa library utils aloop
+```
+
+
 ### 声卡设备查看
 
 可输入以下命令查看系统挂载上的声卡
@@ -1742,9 +1811,28 @@ card_num card_name
 
 ?> 可通过在 `card_default.c` 修改 “card_name”  变量，设定声卡名称。
 
-### 声卡控件
+### 声卡加载配置
 
-具体配置选项，根据芯片平台、内核版本、所需音频模块，各模块的常见使用方法说明和“声卡测试工具使用” 说明。
+声卡配置位于代码中, 路径如下：
+
+在每个方案目录下面：
+```
+projects/方案/src/card_default.c
+```
+使用 `snd_card_register` 函数进行声卡的注册
+```c
+int snd_card_register(const char *name, struct snd_codec *codec, int platform_type)
+```
+- name: 表示声卡的名字，aw‑alsa‑lib中都需要通过该名字找到对应的声卡
+- codec: codec结构体，根据实际使用的codec进行配置，如R128的audiocodec,使用sun20iw2_codec;如ac108,使用 ac108_codec
+- platform_type: 与linux中ASOC框架类似，也需要指定使用哪种类型的platform,如CPUDAI, DAUDIO等
+
+例如注册 AC108 声卡
+```c
+snd_card_register("ac108", &ac108_codec, SND_PLATFORM_TYPE_DAUDIO1);
+```
+
+### 声卡控件
 
 #### alsa-utils 工具
 
@@ -1960,6 +2048,266 @@ numid=2,iface=MIXER,name='rx sync mode'
     : values=1
 ```
 
+###  aw‑alsa‑lib 插件配置
+
+aw‑alsa‑lib 与 linux 上 alsa‑lib 一样支持多种插件, 插件的选择、使用, 需要在代码中进行配置, 路径如下:
+
+```c
+在每个方案目录下面：
+projects/方案/src/alsa_config.c
+```
+
+下面根据插件类型进行简单说明
+
+####  hw 插件
+
+```c
+static const snd_pcm_hw_config_t snd_pcm_hw_config = {
+    .card_name = "audiocodec",
+    .device_num = 0,
+};
+```
+
+- card_name: 声卡名称,需要与card_default.c中注册声卡时指定的名称一致
+- device_num: pcm设备序号，目前仅支持一个pcm设备，所以只能为0
+
+#### dmix 插件
+
+```c
+static const snd_pcm_dmix_config_t snd_pcm_dmix_config = {
+    .type = "dmix",
+    .ipc_key = 2222,
+    .slave = {
+        .pcm = "hw:audiocodec",
+        .format = SND_PCM_FORMAT_S16_LE,
+        .rate = 48000,
+        .channels = 1,
+        .period_size = 1024,
+        .periods = 4,
+    },
+};
+```
+
+- type: 插件类型dmix
+- ipc_key: 需要进行混音的均要指定同一ipc_key
+- slave: pcm从设备的信息
+  - pcm: pcm设备的名称,必须为hw类型
+  - format: 采样格式
+  - rate: 采样率
+  - channels: 通道数
+  - period_size: period_size大小,决定中断触发频率
+  - periods: periods大小,决定buffer size大小
+
+####  dsnoop 插件
+
+```c
+static const snd_pcm_dsnoop_config_t snd_pcm_dsnoop_ref_config = {
+    .type = "dsnoop",
+    .ipc_key = 1114,
+    .slave = {
+        .pcm = "hw:ac107",
+        .format = SND_PCM_FORMAT_S16_LE,
+        .rate = 16000,
+        .channels = 1,
+        .period_size = 1024,
+        .periods = 4,
+    },
+};
+```
+
+- type: 插件类型 dsnoop
+- ipc_key: 需要进行混音的均要指定同一ipc_key
+- slave: pcm从设备的信息
+  - pcm: pcm设备的名称,必须为hw类型
+  - format: 采样格式
+  - rate: 采样率
+  - channels: 通道数
+  - period_size: period_size大小,决定中断触发频率
+  - periods: periods大小,决定buffer size大小
+
+#### softvol 插件
+
+```c
+static const snd_pcm_softvol_config_t snd_pcm_softvol_config = {
+    .type = "softvol",
+    .slave = {
+        .pcm = "PlaybackPlug",
+    },
+    .control = {
+        .control_name = "Soft Volume Master",
+        .card_name = "audiocodec",
+    },
+    .min_dB = ‑51.0,
+    .max_dB = 0.0,
+    .resolution = 256,
+};
+```
+
+- type: 插件类型softvol
+- slave: pcm从设备的信息
+  - pcm: pcm设备的名称,必须为hw类型
+- control: 控件信
+  - control_name: 控件名称
+  - card_name: 声卡名称，指定控件位于哪个声卡中
+- min_dB: 最小衰减
+- max_dB: 最大衰减
+- resolution: 精度
+
+!> 注意, 在第一次使用 softvol 插件进行播放时才会生成该控件; 如果想要在声卡驱动加载的时候就添加该控件，请修改对应的 codec 文件，例如 `SND_CTL_KCONTROL_USER("Soft Volume Master", 255, 0, 255)`
+
+#### asym 插件
+
+```c
+static const snd_pcm_asym_config_t snd_pcm_asym_config = {
+    .type = "asym",
+    .playback_pcm = "PlaybackSoftVol",
+    .capture_pcm = "CaptureDsnoop",
+};
+```
+
+- type: 插件类型softvol
+- playback_pcm: 指定播放设备的名称
+- capture_pcm: 指定录音设备的名称
+
+####  route 插件
+
+```c
+static const snd_pcm_route_config_t snd_pcm_route_config = {
+	.type = "route",
+    .slave = {
+        .pcm = "PlaybackRate",
+        .channels = 1,
+    },
+    .ttable = {
+        {0, 0, 0.5},
+        {1, 0, 0.5},
+        TTABLE_CONFIG_END
+    },
+};
+```
+
+- type: 插件类型route
+- slave: pcm从设备的信息
+  - pcm: pcm设备的名称
+  - channels: 通道数
+- ttable: 各通道配置,上面的配置表示将输入的两声道数据分别作0.5倍衰减，然后合成单声道数据
+  - 第一个值表示输入的通道序号
+  - 第二个值表示输出的通道序号
+  - 第三个值表示衰减值
+  - ttable配置最后请务必添加TTABLE_CONFIG_END,表示配置结束
+
+####  rate 插件
+
+```c
+static const snd_pcm_rate_config_t snd_pcm_rate_config = {
+	.type = "rate",
+    .slave = {
+        .pcm = "PlaybackDmix",
+        .format = SND_PCM_FORMAT_S16_LE,
+        .rate = 48000,
+    },
+	.converter = "speexrate",
+};
+```
+
+- type: 插件类型rate
+- slave: pcm从设备的信息
+  - pcm: pcm设备的名称
+  - format 采样精度
+  - rate 采样率
+- converter 指定使用的重采样算法,建议使用speexrate
+
+#### file 插件
+
+```c
+static const snd_pcm_file_config_t snd_pcm_file_cap_config = {
+	.type = "file",
+    .slave = {
+    	.pcm = "CaptureDsnoop",
+    },
+    .format = "raw",
+    .mode = "adb",
+    .port = 20191,
+};
+```
+
+- type: 插件类型file
+- slave: pcm从设备的信息
+  - pcm: pcm设备的名称
+- format: 音频格式，目前仅支持raw
+- mode: file插件保存数据的模式，目前仅支持adb
+- port: 端口号
+- server: 服务器端ip，当mode为network时才有效
+
+#### multi 插件
+
+```c
+static const snd_pcm_multi_config_t snd_pcm_3mic_1ref_config = {
+    .type = "multi",
+    .slaves = {
+        { "a", "CaptureDsnoop3Mic", 3 },
+        { "b", "CaptureDsnoopRef", 1 },
+        { NULL, NULL, ‑1 },
+    },
+    .bindings = {
+        { 0, "a", 0 },
+        { 1, "a", 1 },
+        { 2, "a", 2 },
+        { 3, "b", 0 },
+        { ‑1, NULL, ‑1 },
+    },
+};
+```
+
+- type: 插件类型multi
+- slaves: pcm从设备的信息,上述配置表示同时对a,b两个pcm设备进行录音
+  - 第一个参数表示pcm设备的别名,方便后续bingdings域指定不同的pcm设备
+  - 第二个参数表示pcm设备的名称
+  - 第三个参数表示通道总数
+  - 注意请在配置最后添加{ NULL, NULL, ‑1 },表示结束
+- bindings: 指定多个声卡的通道数排列,上述配置表示a声卡的3通道分别作为通道0,1,2输出,b声卡的通道0作为通道3输出
+  - 第一个参数表示录音输出的通道序号
+  - 第二个参数表示指定声卡的通道序号
+  - 注意请在配置最后添加{ ‑1, NULL, ‑1 },表示结束
+
+#### plug 插件
+
+```C
+static const snd_pcm_plug_config_t snd_pcm_plug_config = {
+    .type = "plug",
+    .slave = {
+        .pcm = "PlaybackDmix",
+        .format = SND_PCM_FORMAT_S16_LE,
+        .channels = 1,
+        .rate = 48000,
+    },
+    .rate_converter = "speexrate",
+    .route_policy = "default",
+    .ttable = {
+        TTABLE_CONFIG_END
+    },
+};
+```
+
+- type: 插件类型plug
+- slave: pcm从设备的信息
+  - pcm: pcm设备的名称
+  - format: 采样格式
+  - channels: 通道数
+  - rate: 采样率
+- rate_converter: 指定使用的重采样算法名称
+- route_policy: 使用route插件时的策略,可选average,copy,duplicate,default即为copy
+
+- ttable: 各通道配置,上面的配置表示将输入的两声道数据分别作0.5倍衰减，然后合成单声道数据
+
+  - 第一个值表示输入的通道序号
+
+  - 第二个值表示输出的通道序号
+
+  - 第三个值表示衰减值
+
+  - ttable配置最后请务必添加TTABLE_CONFIG_END,表示配置结束
+
 ### I2S 外挂CODEC
 
 #### 硬件连接
@@ -1986,6 +2334,1368 @@ numid=2,iface=MIXER,name='rx sync mode'
 9.	slot 宽度：最高要支持多少 slot 宽度（音频采样位深）。
 
 查看 “模块介绍” 说明的 “AHUB” 或 “I2S/PCM” -> “sys_conf 配置” 中的配置项说明，根据 I2S 协议格式进行配置。
+
+## AudioSystem
+
+对于多核异构芯片，包含 RV/M33/DSP 三个核，各自运行这一个 RTOS，他们无法同时访问操作同一个音频硬件接口，因此软件上会实现跨核音频相关的功能，并且会屏蔽底层实现细节，让应用无感知，这套软件我们称之为 AudioSystem。
+
+### AudioSystem 软件框架
+
+任意核上都能运行 AudioSystem, 因此可以提供统一的音频软件接口，而 AudioSystem 里面会根据实际配置对接到具体音频硬件接口，或者跨核音频接口。主要框图如下：
+
+![image-20230506091034129](assets/post/audio/image-20230506091034129.png)
+
+AudioSystem 可实现的功能包括：
+
+- AudioTrack，支持多实例播放
+- AudioRecord，支持多实例录音
+- audio_plugin, 支持软件音量、重采样、精度转换、通道映射等功能
+- audio_hw, 向上给 AudioTrack/AudioRecord 提供通用的数据读写接口，向下可对接本地声卡、跨核音频接口，甚至是 BT a2dp source 等功能。
+
+![image-20230506091249891](assets/post/audio/image-20230506091249891.png)
+
+### 软件配置
+
+```
+System components ‑‑‑>
+	aw components ‑‑‑>
+	AudioSystem Support ‑‑‑>
+        [*] AW Audio System Support
+        [*] Audio HW Support
+        [*] Audio HW Support PCM
+        [ ] Audio HW Support Multi PCM
+        [ ] Audio HW Support AMP
+        [ ] Audio HW Support BT
+        [*] Audio HW Support EQ
+        [ ] Audio HW Support AW EQ
+        [*] Audio HW Support DRC
+        [*] Audio Track Support
+        [*] Audio Record Support
+        [*] Audio System Utils
+        [*] Audio Plugin Support
+```
+
+### 参数配置
+
+AudioSystem 默认使能录音和播放的参数设置，涉及到的相关配置如下:
+
+```
+board/r128s2/pro/configs/sys_config.fex
+```
+
+根据板子的型号来选择对应的目录。这里是r128s2的pro板。录音和播放相关的参数如下：
+
+```
+[audio_hw_rv] //RV核参数配置
+pcm_pb_rate = 48000
+pcm_pb_channels = 1
+pcm_pb_bits = 16
+pcm_pb_period_size = 960
+pcm_pb_periods = 4
+pcm_pb_card = "hw:audiocodecdac" //播放声卡名称
+amp_cap_rate = 16000
+amp_cap_channels = 3
+amp_cap_bits = 16
+amp_cap_period_size = 320
+amp_cap_periods = 4
+amp_cap_card = "capture" //跨核声卡的名称
+
+[audio_hw_dsp] //dsp核参数配置
+pcm_cap_rate = 48000
+pcm_cap_channels = 3
+pcm_cap_bits = 16
+pcm_cap_period_size = 320
+pcm_cap_periods = 4
+pcm_cap_card = "hw:audiocodecadc" //录音声卡名称
+```
+
+!> 请根据实际使用需求配置参数，不要随意设置参数，否则会导致录音或播放失败，因为驱动会限制 periods，period_size 还有buffer_bytes 的最小值和最大值。如果录音出现 overrun，可以尝试增大 periods，不要随意修改 period_size。
+
+### 音频接口
+
+头文件
+
+```
+#include <AudioSystem.h>
+```
+
+AudioSystem.h 包含了 AudioTrack.h 以及 AudioRecord.h，因此应用上可以只包含 AudioSystem.h 即可
+
+####  AudioTrack 接口
+
+头文件
+
+```
+#include <AudioTrack.h>
+```
+
+##### 创建 AudioTrack
+
+```c
+tAudioTrack *AudioTrackCreate(const char *name)
+```
+
+参数：
+
+- name: 指定audio_hw名称
+
+返回值：
+
+- 成功则返回AudioTrack句柄，失败返回NULL。
+
+!> name 参数可支持的值，可以通过 ahw_list 命令查看, 例如 default,amp 也可以在代码中自定义添加需要的名称，详情可以参考 audio_hw/audio_hw.c 中的 add_default_ahw 函数
+
+##### 创建指定音频流类型的 AudioTrack
+
+```c
+tAudioTrack *AudioTrackCreateWithStream(const char *name, uint16_t type)
+```
+
+参数：
+
+- name: 指定audio_hw名称
+- type: 音频流类型，每个类型都有独自的音量调节曲线
+
+返回值：
+
+- 成功则返回AudioTrack句柄，失败返回NULL。
+
+!> 如果使用 AudioTrackCreate 接口，默认使用的音频流类型是 AUDIO_STREAM_SYSTEM 音频流音量曲线在 audio_plugin/softvolume.c 里面定义, 可以参考 softvol_stream_init 函数默认加载了两种类型的曲线。
+
+##### 设置 AudioTrack 相关音频参数
+
+```c
+int AudioTrackSetup(tAudioTrack *at, uint32_t rate, uint8_t channels, uint8_t bits)
+```
+
+参数：
+
+- at: AudioTrack句柄
+- rate: 采样率
+- channels: 通道数
+- bits: 采样精度
+
+返回值：
+
+- 成功则返回0,否则返回error code
+
+##### 写入 PCM 数据
+
+```c
+int AudioTrackWrite(tAudioTrack *at, void *data, uint32_t size)
+```
+
+参数：
+
+- at: AudioTrack句柄
+- data: 要写入的pcm数据
+- size: 数据大小,bytes
+
+返回值：
+
+- 成功则返回写入的字节数否则返回error code
+
+##### 开启 AudioTrack
+
+```c
+int AudioTrackStart(tAudioTrack *at)
+```
+
+参数：
+
+- at: AudioTrack句柄
+
+返回值：
+
+- 成功则返回0,否则返回error code
+
+!> 放音流程中不一定要执行 AudioTrackStart 函数，因为在调用 AudioTrackWrite 的时候，内部会根据状态自动调用 start 的。
+
+##### 停止 AudioTrack
+
+```c
+int AudioTrackStop(tAudioTrack *at)
+```
+
+参数：
+
+- at: AudioTrack句柄
+
+返回值：
+
+- 成功则返回0,否则返回error code
+
+##### 获取当前 AudioTrack 仍有多少数据未送入声卡
+
+```c
+int AudioTrackDelay(tAudioTrack *at)
+```
+
+参数：
+
+- at: AudioTrack句柄
+
+返回值：
+
+- 成功则返回0,否则返回error code
+
+##### 销毁 AudioTrack
+
+```c
+int AudioTrackDestroy(tAudioTrack *at)
+```
+
+参数：
+
+- at: AudioTrack句柄
+
+返回值：
+
+- 成功则返回0,否则返回error code
+
+####  AudioRecord 接口
+
+头文件
+
+```
+#include <AudioRecord.h>
+```
+
+##### 创建 AudioRecord
+
+```c
+tAudioRecord *AudioRecordCreate(const char *name)
+```
+
+参数：
+
+- name: 指定audio_hw名称
+
+返回值：
+
+- 成功则返回AudioRecord句柄，失败返回NULL。
+
+##### 设置 AudioRecord 相关音频参数
+
+```c
+int AudioRecordSetup(tAudioRecord *ar, uint32_t rate, uint8_t channels, uint8_t bits)
+```
+
+参数：
+
+- ar: AudioRecord句柄
+- rate: 采样率
+- channels: 通道数
+- bits: 采样精度
+
+返回值：
+
+- 成功则返回0,否则返回error code
+
+##### 获取 PCM 数据
+
+```c
+int AudioRecordRead(tAudioRecord *ar, void *data, uint32_t size)
+```
+
+参数：
+
+- ar: AudioRecord句柄
+- data: 读取的pcm数据存放的地址
+- size: 数据大小,bytes
+
+返回值：
+
+- 成功则返回写入的字节数,否则返回error code
+
+##### 开启 AudioRecord
+
+```c
+int AudioRecordStart(tAudioRecord *ar)
+```
+
+参数：
+
+- ar: AudioRecord句柄
+
+返回值：
+
+- 成功则返回0,否则返回error code
+
+!> 放音流程中不一定要执行 AudioRecordStart 函数，因为在调用 AudioRecordRead 的时候，内部会根据状态自动调用 start
+
+##### 停止 AudioRecord
+
+```c
+int AudioRecordStop(tAudioRecord *ar)
+```
+
+参数：
+
+- ar: AudioRecord句柄
+
+返回值：
+
+- 成功则返回0,否则返回error code
+
+##### 销毁 AudioRecord
+
+```c
+int AudioRecordDestroy(tAudioRecord *ar)
+```
+
+参数：
+
+- ar: AudioRecord句柄
+
+返回值：
+
+- 成功则返回0,否则返回error code
+
+####  AudioSystem 其他接口
+
+头文件
+
+```c
+#include <AudioSystem.h>
+```
+
+##### AudioSystem 初始化
+
+```c
+int AudioSystemInit(void)
+```
+
+参数：
+
+- 无
+
+返回值：
+
+- 成功则返回0,否则返回error code
+
+!> AudioSystemInit 一般在 os 的初始化流程中调用 (例如 main.c 中)
+
+##### 软件音量控制接口
+
+```c
+int softvol_control_with_streamtype(int stream_type, uint32_t *vol_index, int16_t mode)
+```
+
+参数：
+
+- stream_type: 音频流类型
+- vol_index: 据mode得到的音量数值
+- mode: 操作模式。0:读取；1：写入；2：读取范围
+
+返回值：
+
+- 成功则返回0,否则返回error code
+
+!> 当 mode 为 2 时，vol_index 的值表示音量范围，低 16bit 表示最小值，高 16bit 表示最大值。
+
+####  AudioSystem 接口示例
+
+```c
+#include <stdio.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <math.h>
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
+#include <console.h>
+
+#include <AudioSystem.h>
+
+#include "wav_parser.h"
+#include <hal_thread.h>
+
+static int g_loop_count = 0;
+static int8_t g_play_or_cap = 0;
+static int8_t g_record_then_play = 0;
+static int8_t g_bits = 0;
+static int g_run_time = 0;
+static int g_at_task_id = 0;
+static int g_ar_task_id = 0;
+static int g_rate = 0;
+static int g_channels = 0;
+static char g_wav_path[128] = "16K_16bit_1ch";
+static int g_tmp_arg = 0;
+static char g_at_name[12] = "default";
+static char g_ar_name[12] = "default";
+static int g_ar_forward_port = 0;
+
+#define LOCAL_PRIORITIES	\
+	(configMAX_PRIORITIES > 20 ? configMAX_PRIORITIES - 8 : configMAX_PRIORITIES - 3)
+
+struct as_test_data {
+	int loop_count;
+	int type;		/* 0:wav, 1:data */
+	uint32_t rate,channels;
+	void *ptr;
+	int data_bytes;
+	uint8_t bits;
+	int8_t sec;
+	int8_t record_then_play;
+};
+
+#define PI (3.1415926)
+static int sine_generate(void *buf, uint32_t len, uint32_t rate, uint32_t channels, uint8_t bits, float amp)
+{
+	int sine_hz = 1000;
+	int sine_point, sine_cycle, sine_point_bytes;
+	int i,j;
+	int accuracy = INT16_MAX;
+	int frame_bytes;
+
+	if (amp > 1.0)
+		amp = 1.0;
+	else if (amp < 0.01)
+		amp = 0.01;
+
+	frame_bytes = channels * bits / 8;
+	sine_point = rate / sine_hz;
+	sine_point_bytes = frame_bytes * sine_point;
+	sine_cycle = len / sine_point_bytes;
+	if (bits == 16) {
+		int16_t *data = buf;
+		accuracy = INT16_MAX;
+		for (j = 0; j < sine_point; j++) {
+			int16_t value = (int16_t)(amp * accuracy * sin(2 * (double)PI * j / sine_point));
+			if (channels == 1) {
+				data[j] = value;
+			} else if (channels == 2) {
+				data[2 * j] = value;
+				data[2 * j + 1] = value;
+			} else {
+				printf("unsupport channels:%d\n", channels);
+				while(1);
+			}
+		}
+	} else if (bits == 32) {
+		int32_t *data = buf;
+		accuracy = INT32_MAX;
+		for (j = 0; j < sine_point; j++) {
+			int32_t value = (int32_t)(amp * accuracy * sin(2 * (double)PI * j / sine_point));
+			if (channels == 1) {
+				data[j] = value;
+			} else if (channels == 2) {
+				data[2 * j] = value;
+				data[2 * j + 1] = value;
+			} else {
+				printf("unsupport channels:%d\n", channels);
+				while(1);
+			}
+		}
+	}
+
+	for (i = 1; i < sine_cycle; i++) {
+		memcpy(buf + i * sine_point_bytes, buf, sine_point_bytes);
+		/*printf("[%s] line:%d buf:%p, dest:%p, ofs:%u\n", __func__, __LINE__,*/
+			/*buf, buf + i * sine_point_bytes, i * sine_point_bytes);	*/
+	}
+
+	return sine_cycle * sine_point_bytes;
+}
+
+static void play_sine(tAudioTrack *at, uint32_t rate, uint8_t channels, uint8_t bits, int sec)
+{
+	int frame_loop = 480;
+	int count, frame_bytes;
+	void *buf;
+	int len, size = 0;
+
+	frame_bytes = frame_loop * channels * (bits == 16 ? 2 : 4);
+	count = rate * sec / frame_loop;
+
+	buf = malloc(frame_bytes);
+	/*printf("[%s] line:%d malloc %u bytes\n", __func__, __LINE__, frame_bytes);*/
+	if (!buf)
+		return;
+
+	len = sine_generate(buf, frame_bytes, rate, channels, bits, 0.8);
+	while (count--) {
+		size = AudioTrackWrite(at, buf, len);
+		if (size != len) {
+			printf("at write return %d\n", size);
+			break;
+		}
+	}
+	free(buf);
+}
+
+static void at_sine_task(void *arg)
+{
+	tAudioTrack *at;
+	int channels = g_channels;
+	int rate = g_rate;
+	int sec = g_run_time;
+	uint8_t bits = g_bits;
+
+#if 1
+	at = AudioTrackCreate(g_at_name);
+#else
+	at = AudioTrackCreateWithStream(g_at_name, AUDIO_STREAM_MUSIC);
+#endif
+	if (!at) {
+		printf("at create failed\n");
+		goto err;
+	}
+
+	AudioTrackSetup(at, rate, channels, bits);
+	play_sine(at, rate, channels, bits, sec);
+
+	AudioTrackStop(at);
+
+	AudioTrackDestroy(at);
+err:
+	vTaskDelete(NULL);
+}
+
+static void at_sine_task_create()
+{
+	hal_thread_t handle;
+	char buf[32];
+
+	snprintf(buf, sizeof(buf), "at_sine%d", g_at_task_id);
+	g_at_task_id++;
+	handle = hal_thread_create(at_sine_task, NULL, buf, 8192, HAL_THREAD_PRIORITY_APP);
+}
+
+static void at_task(void *arg)
+{
+	tAudioTrack *at;
+	struct as_test_data *data = arg;
+
+	at = AudioTrackCreate(g_at_name);
+	if (!at) {
+		printf("at create failed\n");
+		goto err;
+	}
+
+	if (data->type == 0)  {
+        /* Pass */
+	} else if (data->type == 1 && data->ptr != NULL){
+		/* play pcm data */
+		int value = 0;
+		int count = data->loop_count;
+		AudioTrackSetup(at, data->rate, data->channels, data->bits);
+		while (count--) {
+			AudioTrackWrite(at, data->ptr, data->data_bytes);
+			value++;
+			printf("[%s] line:%d playback count=%d\n", __func__, __LINE__, value);
+		}
+	}
+	AudioTrackStop(at);
+
+	AudioTrackDestroy(at);
+err:
+	if (data->ptr)
+		free(data->ptr);
+	free(data);
+	vTaskDelete(NULL);
+}
+
+static void at_task_create(struct as_test_data *data)
+{
+	hal_thread_t handle;
+	char buf[32];
+	struct as_test_data *d;
+
+	d = malloc(sizeof(struct as_test_data));
+	if (!data) {
+		d->type = 0;
+		d->ptr = NULL;
+		d->loop_count = g_loop_count;
+	} else {
+		memcpy(d, data, sizeof(struct as_test_data));
+	}
+	snprintf(buf, sizeof(buf), "at_task%d", g_at_task_id);
+	g_at_task_id++;
+	handle = hal_thread_create(at_task, d, buf, 2048, HAL_THREAD_PRIORITY_APP);
+}
+extern int adb_forward_create_with_rawdata(int port);
+extern int adb_forward_send(int port, void *data, unsigned len);
+extern int adb_forward_end(int port);
+static void ar_task(void *arg)
+{
+	tAudioRecord *ar;
+	struct as_test_data *data = arg;
+	uint32_t rate = data->rate;
+	uint32_t channels = data->channels;
+	uint8_t bits = data->bits;
+	int total, read_size, size, read = 0;
+	int frame_bytes = bits / 8  * channels;
+	int frames_bytes_loop = frame_bytes * rate / 100; /* 10ms */
+	void *buf = NULL;
+
+	if (data->sec)
+		total = data->sec * rate * frame_bytes;
+	else
+		total = frames_bytes_loop; /* 10ms buffer */
+
+#ifdef CONFIG_COMPONENTS_USB_GADGET_ADB_FORWARD
+	int _port = g_ar_forward_port;
+	if (g_ar_forward_port > 0)
+		g_ar_forward_port = 0;
+	if (adb_forward_create_with_rawdata(_port) < 0)
+		_port = -1;
+#endif
+	ar = AudioRecordCreate(g_ar_name);
+	if (!ar) {
+		printf("ar create failed\n");
+		goto err;
+	}
+
+	buf = malloc(total);
+	if (!buf) {
+		printf("no memory\n");
+		goto err;
+	}
+
+	AudioRecordSetup(ar, rate, channels, bits);
+	AudioRecordStart(ar);
+
+	printf("[%s] line:%d buf:%p, %d\n", __func__, __LINE__, buf, total);
+	while (data->loop_count--) {
+		if (data->sec)
+			total = data->sec * rate * frame_bytes;
+		else
+			total = frames_bytes_loop;
+		read = 0;
+		while (total > 0) {
+			if (total > frames_bytes_loop)
+				size = frames_bytes_loop;
+			else
+				size = total;
+			read_size = AudioRecordRead(ar, buf + read, size);
+			if (read_size != frames_bytes_loop) {
+				printf("read_size(%d) != frames_bytes_loop(%d)\n", read_size, frames_bytes_loop);
+				break;
+			}
+#ifdef CONFIG_COMPONENTS_USB_GADGET_ADB_FORWARD
+			adb_forward_send(_port, buf + read, size);
+#endif
+			total -= read_size;
+			read += read_size;
+			/*printf("[%s] line:%d residue:%d read=%u\n", __func__, __LINE__, total, read);*/
+		}
+		if (read_size < 0)
+			break;
+	}
+	AudioRecordStop(ar);
+	AudioRecordDestroy(ar);
+	ar = NULL;
+#ifdef CONFIG_COMPONENTS_USB_GADGET_ADB_FORWARD
+	adb_forward_end(_port);
+	/* don't destroy port for repeating record */
+	/*adb_forward_destroy(_port);*/
+#endif
+
+	vTaskDelay(pdMS_TO_TICKS(500));
+	if (data->record_then_play != 0) {
+		struct as_test_data d = {
+			.loop_count = 1,
+			.type = 1,
+			.rate = rate,
+			.channels = channels,
+			.ptr = buf,
+			.data_bytes = read,
+			.bits = bits,
+		};
+		at_task_create(&d);
+		buf = NULL;
+	}
+
+err:
+	if (ar)
+		AudioRecordDestroy(ar);
+	free(data);
+	if (buf)
+		free(buf);
+	vTaskDelete(NULL);
+}
+
+static void ar_task_create(struct as_test_data *data)
+{
+	hal_thread_t handle;
+	char buf[32];
+	struct as_test_data *d;
+
+	d = malloc(sizeof(struct as_test_data));
+	if (!data) {
+		d->type = 0;
+		d->ptr = NULL;
+		d->rate = g_rate;
+		d->channels = g_channels;
+		d->bits = g_bits;
+		d->record_then_play = g_record_then_play;
+		d->loop_count = g_loop_count;
+		d->sec = g_run_time;
+	} else {
+		memcpy(d, data, sizeof(struct as_test_data));
+	}
+	snprintf(buf, sizeof(buf), "ar_task%d", g_ar_task_id);
+	g_ar_task_id++;
+	handle = hal_thread_create(ar_task, d, buf, 2048, HAL_THREAD_PRIORITY_APP);
+}
+
+static void as_test_usage()
+{
+	printf("Usgae: as_test [option]\n");
+	printf("-h,          as_test help\n");
+	printf("-s,          stream, 0-playback; 1-capture; 2-playback sine\n");
+	printf("-d,          duration, sec\n");
+	printf("-r,          rate\n");
+	printf("-c,          channels\n");
+	printf("-b,          bits\n");
+	printf("-t,          capture and then playback\n");
+	printf("-n,          AudioTrack name\n");
+	printf("-m,          AudioRecord name\n");
+	printf("-l,          loop count\n");
+	printf("-f,          adb forward port\n");
+	printf("\n");
+	printf("play sine:\n");
+	printf("as_test -s 2 -d 10 -r 48000\n");
+	printf("capture:\n");
+	printf("as_test -s 1 -d 0 -l 1000 -r 16000 -c 3\n");
+	printf("capture and forward:\n");
+	printf("as_test -s 1 -d 0 -l 1000 -r 16000 -c 3 -f 20227\n");
+	printf("\n");
+}
+
+int cmd_as_test(int argc, char *argv[])
+{
+	int c = 0;
+	g_play_or_cap = 0;
+	g_loop_count = 1;
+	g_run_time = 3;
+	g_rate = 16000;
+	g_channels = 2;
+	g_bits = 16;
+	g_record_then_play = 0;
+
+	optind = 0;
+	while ((c = getopt(argc, argv, "htl:s:ad:r:c:b:g:n:m:f:")) != -1) {
+		switch (c) {
+		case 'h':
+			as_test_usage();
+			return 0;
+		case 'l':
+			g_loop_count = atoi(optarg);
+			break;
+		case 's':
+			/*
+			 * 0: playback
+			 * 1: capture
+			 * 2: playback sine
+			 * */
+			g_play_or_cap = atoi(optarg);
+			break;
+		case 'd':
+			g_run_time = atoi(optarg);
+			break;
+		case 'r':
+			g_rate = atoi(optarg);
+			break;
+		case 'c':
+			g_channels = atoi(optarg);
+			break;
+		case 'b':
+			g_bits = atoi(optarg);
+			break;
+		case 't':
+			g_record_then_play = 1;
+			break;
+		case 'g':
+			g_tmp_arg = atoi(optarg);
+			break;
+		case 'n':
+			strncpy(g_at_name, optarg, sizeof(g_at_name));
+			break;
+		case 'm':
+			strncpy(g_ar_name, optarg, sizeof(g_ar_name));
+			break;
+		case 'f':
+			g_ar_forward_port = atoi(optarg);
+			break;
+		default:
+			return -1;
+		}
+	}
+
+	if (optind < argc) {
+		strncpy(g_wav_path, argv[optind], sizeof(g_wav_path) - 1);
+	} else {
+		strcpy(g_wav_path, "16K_16bit_1ch");
+	}
+
+	switch (g_play_or_cap) {
+	case 0:
+		at_task_create(NULL);
+		break;
+	case 1:
+		ar_task_create(NULL);
+		break;
+	case 2:
+		at_sine_task_create(NULL);
+		break;
+	default:
+		printf("unknown 's' command\n");
+		break;
+	}
+	return  0;
+}
+FINSH_FUNCTION_EXPORT_CMD(cmd_as_test, as_test, audio system test);
+
+
+static void as_volume_usage(void)
+{
+	printf("Usgae: as_volume [option]\n");
+	printf("-h,          as_volume help\n");
+	printf("-t,          volume type\n");
+	printf("             1:system\n");
+	printf("             2:music\n");
+	printf("-m,          option mode\n");
+	printf("             0:get\n");
+	printf("             1:set\n");
+	printf("             2:get range\n");
+	printf("\n");
+}
+
+static int cmd_as_volume(int argc, char *argv[])
+{
+	int type = AUDIO_STREAM_SYSTEM;
+	int volume_mode = 0;
+	uint32_t volume_value = 0;
+	int c = 0, ret = 0;
+
+	optind = 0;
+	while ((c = getopt(argc, argv, "ht:m:")) != -1) {
+		switch (c) {
+		case 't':
+			type = atoi(optarg);
+			break;
+		case 'm':
+			volume_mode = atoi(optarg);
+			break;
+		case 'h':
+		default:
+			as_volume_usage();
+			return -1;
+		}
+	}
+
+	if (optind < argc) {
+		int value = atoi(argv[optind]);
+		volume_value = (uint32_t)(value | value << 16);
+	}
+
+	ret = softvol_control_with_streamtype(type, &volume_value, volume_mode);
+	if (ret != 0) {
+		printf("softvol(t:%d, m:%d), control failed:%d\n", type, volume_mode, ret);
+		return -1;
+	}
+
+	switch (volume_mode) {
+	case 0: /* read */
+		printf("softvol(%d) read, value=%d,%d\n", type,
+				(volume_value & 0xffff),
+				((volume_value >> 16) & 0xffff));
+		break;
+	case 1: /* write */
+		printf("softvol(%d) write, value=%d,%d\n", type,
+				(volume_value & 0xffff),
+				((volume_value >> 16) & 0xffff));
+		break;
+	case 2: /* read range */
+		printf("softvol(%d) read, min=%u, max=%u\n", type,
+				(volume_value & 0xffff),
+				((volume_value >> 16) & 0xffff));
+		break;
+	}
+
+	return 0;
+}
+FINSH_FUNCTION_EXPORT_CMD(cmd_as_volume, as_volume, audio system volume control);
+```
+
+### AudioSystem 测试工具
+
+#### ahw_list 命令
+
+用于查看当前 audio_hw 中支持了哪些 audio_hw_elem
+
+```
+audio hw list:
+instance |name |read |write
+0 |default |0x04064128|0x04063ff4
+2 |playback |0000000000|0x04063ff4
+
+第一列instance, 每个elem都有一个instasnce值，决定他们是哪种类型的HW_TYPE
+第二列name, 每个elem都有唯一的标志名称。
+第三列read，表示读函数指针，0表示不支持读。
+第四列write,表示写函数指针，0表示不支持写。
+```
+
+#### as_test 命令
+
+as_test 可用于测试播放录音功能。
+
+| 选项 | 功能                                                         |
+| ---- | ------------------------------------------------------------ |
+| ‑s   | 哪种测试；0: playback; 1: capture; 2: 播放 sine              |
+| ‑d   | 运行时间 (秒); 注意, 录音会根据该值申请对应大小的内存 buffer，不能设置太大 |
+| ‑l   | 循环执行次数；可以结合‑d 参数实现较低内存长时间的测试        |
+| ‑r   | 采样率                                                       |
+| ‑c   | 通道数                                                       |
+| ‑b   | 采样精度                                                     |
+| ‑t   | 录音然后播放                                                 |
+| ‑n   | 指定创建 AudioTrack 时的 name 参数                           |
+| ‑m   | 指定创建 AudioRecord 时的 name 参数                          |
+| ‑f   | adb forward 的端口号                                         |
+
+测试举例：
+
+```c
+播放5s 48K,2ch的正弦波数据:
+as_test ‑s 2 ‑d 5 ‑r 48000 ‑c 2
+    
+播放5s 48K,2ch,32bit的正弦波数据:
+as_test ‑s 2 ‑d 5 ‑r 48000 ‑c 2 ‑b 32
+    
+播放10s 16K 1ch的正弦波数据：
+as_test ‑s 2 ‑d 10 ‑r 16000 ‑c 1
+    
+播放U盘中指定的文件：
+as_test ‑s 0 ‑n playback /usb_msc/test.wav
+    
+录音1s钟
+as_test ‑s 1 ‑m amp ‑d 1 ‑c 3 ‑f 20227
+    
+3通道录音100s(‑d 0表示由‑l决定时间=10000*10ms=100s)
+as_test ‑s 1 ‑m amp ‑d 0 ‑l 10000 ‑c 3 ‑f 20227
+    
+2通道录音3s然后播放出来
+as_test ‑s 1 ‑d 3 ‑c 2 ‑m amp ‑t
+    
+如果是在dsp使用录音的话，‑m参数要使用default。
+```
+
+####  as_volume 命令
+
+可以通过 as_volume 命令获取或者设置不同类型的音量值。
+
+注意需要选中 COMPONENTS_AW_AUDIO_SYSTEM_PLUGIN 之后才有该功能。
+
+```
+获取SYSTEM类型的当前音量值
+命令：
+as_volume ‑t 1 ‑m 0
+结果：
+softvol(1) read, value=5,5
+
+设置SYSTEM类型的音量值
+命令：
+as_volume ‑t 1 ‑m 1 8
+结果：
+softvol(1) read, value=8,8
+
+获取MUSIC类型的音量范围
+命令：
+as_volume ‑t 2 ‑m 2
+结果：
+softvol(2) read, min=0, max=10
+```
+####  as_debug 命令
+
+as_debug 用于开启、关闭 AudioSystem 的调试模式。开启后会有更多 (对应代码中 `_debug `打印) 的调试信息。
+
+开启方式：
+```
+as_debug 1
+```
+
+
+## AW 音效
+
+FreeRTOS 中使用 AudioSystem 的 audio hw 层来实现 AW EQ 功能。该功能是 AW（AllWinner）提供的软件音效 EQ 音效，需要选择 EQ 库才能使用。
+
+### 编译 AudioSystem 的 AW EQ
+
+下面是编译的配置。要先选择 EQ Module，才会出现 Audio HW Support AW EQ。
+
+```c
+System components ‑‑‑>
+    aw components ‑‑‑>
+        Algorithm Process Module ‑‑‑>
+        	[*] EQ Module
+        AudioSystem Support ‑‑‑>
+            [*] AW Audio System Support
+            [*] Audio HW Support
+            [*] Audio HW Support PCM
+            [ ] Audio HW Support Multi PCM
+            ‑*‑ Audio HW Support AMP
+            [ ] Audio HW Support BT
+            [ ] Audio HW Support EQ
+            [*] Audio HW Support AW EQ
+            [ ] Audio HW Support DRC
+            [*] Audio Track Support
+            [*] Audio Record Support
+            [*] Audio System Utils
+            [*] Audio Plugin Support
+```
+
+### 使用软件 AW EQ
+
+1. 确保 data 目录下有 EQ.conf 配置文件，该配置文件保存的是调试 EQ 的参数。
+
+EQ.conf 的路径如下:
+
+```
+board/芯片/项目/data/UDISK
+```
+
+例如 R128S2的pro板。
+
+```
+board/r128s2/pro/data/UDISK
+```
+
+2. 在应用核（RV）使用如下命令，即可调用软件 EQ 进行播放。
+
+```
+as_test ‑s 0 ‑n playbackEQ /usb_msc/test.wav
+```
+
+3. 如果更新了 EQ 参数，需要更新配置文件 EQ.conf 到 data/UDISK 目录下，使用上述命令即可生效。
+
+### 使用 AudioSystem 的硬件 HW EQ 功能
+
+R128 平台支持硬件 DAC 的 20‑band main EQ 和 5‑band post EQ，所以软件 AW EQ 默认不使用。
+
+FreeRTOS 中使用 AudioSystem 的 audio hw 层来实现 HW EQ 功能。
+
+#### 编译 AudioSystem 的 HW EQ
+
+```
+System components ‑‑‑>
+    aw components ‑‑‑>
+        AudioSystem Support ‑‑‑>
+            [*] AW Audio System Support
+            [*] Audio HW Support
+            [*] Audio HW Support PCM
+            [ ] Audio HW Support Multi PCM
+            ‑*‑ Audio HW Support AMP
+            [ ] Audio HW Support BT
+            [*] Audio HW Support EQ
+            [ ] Audio HW Support AW EQ
+            [ ] Audio HW Support DRC
+            [*] Audio Track Support
+            [*] Audio Record Support
+            [*] Audio System Utils
+            [*] Audio Plugin Support
+```
+
+#### 使用离线 HW EQ
+
+1. 确保 data 目录下有 R128EQ‑5band.conf 或 R128EQ‑20band.conf 配置文件，该配置文件保存的是硬件 EQ 的参数。如果上述配置文件都没有，HW EQ 就不会生效。
+
+R128EQ‑5band.conf或R128EQ‑20band.conf的路径如下:
+
+```
+board/r128s2/pro/data/UDISK
+```
+
+根据硬件配置来选择路径。这里对应的是R128S2的pro板。
+
+如果没有文件会打印
+
+```
+Parse from config file /data/R128EQ‑20band.conf
+Failed to open /data/R128EQ‑5band.conf (2)
+
+第一行打印表示已经读取了20band EQ的配置文件，并设置到硬件。
+第二行打印表示对应路径没有配置文件，读取失败，不会配置。
+```
+
+2. 在应用核（RV）使用如下命令，即可调用 HW EQ 进行播放。
+
+```
+as_test ‑s 0 ‑n playback /usb_msc/test.wav
+```
+
+如果更新了 HW EQ 参数，需要更新配置文件 R128EQ‑5band.conf 或 R128EQ‑20band.conf 到data/UDISK 目录下。
+
+!> 因为是硬件 EQ 是配置寄存器，所以只有开机后第一次播放音乐会生效，没有必要每次播放都更新硬件寄存器。如果更新了 HW EQ 参数，就要重启后，再次播放音乐生效
+
+## 常用调试方法
+
+### dump 寄存器
+
+通过 reg_read/reg_write 命令可以读写 SoC 上的寄存器，可以通过查看 SoC 的 user manual, 得到具体模块的寄存器地址。
+
+例如：
+
+```c
+audiocodec模块寄存器基地址为0x5096000
+
+将0x5096000开始后面4个寄存器打印出来:
+reg_read 0x5096000 0x10
+
+将0x5096010的值设置为0x60004000
+reg_write 0x5096010 0x80004000
+```
+
+### 实时获取录音数据
+
+很多时候需要获取设备实际录音数据，用于确认数据的准确性、声学性能等，而在 RTOS 中存储介质比较有限，并且写入速度慢，并不能用于保存录音数据。这里利用 adb forword 功能，配合 alsa file 插件，可以实现基于 USB 传输的 PC 端实时获取录音数据的功能。
+
+#### PC 端通过脚本，实时获取录音数据
+
+!> PC 上使用脚本录音，需要对应 python2.0 的版本。如果使用更高版本的 python，需要修改代码。最终保存的文件是 pcm 数据。
+
+准备一个 adb_record.py 写入以下脚本
+
+```py
+#!/usr/bin/python2
+import sys
+import socket
+import time
+import datetime
+
+pc_port=11112
+upload_file="data.pcm"
+upload_start="‑‑>AW_RTOS_SOCKET_UPLOAD_START"
+upload_end="‑‑>AW_RTOS_SOCKET_UPLOAD_END"
+data_length=4096
+
+def client_test(port):
+	s = socket.socket()
+	host = "localhost"
+	s.connect((host,port))
+	while True:
+		data = s.recv(data_length)
+		if upload_start in data:
+			print 'recv upload start flag...data_len=%d, flag_len=%d' % (len(data), len(upload_start))
+			now_time = datetime.datetime.now().strftime("%Y‑%m‑%d‑%H‑%M‑%S")
+			upload_file="record‑" + now_time + ".pcm"
+			if (len(upload_start) != len(data)):
+				with open(upload_file.decode('utf‑8'), 'ab+') as f:
+					f.write(data[len(upload_start):])
+		elif upload_end in data:
+			index = data.find(upload_end)
+			print 'recv upload end flag...data_len=%d, str_index=%d' % (len(data), index)
+			if index > 0:
+				with open(upload_file.decode('utf‑8'), 'ab+') as f:
+				f.write(data[:index])
+				break
+			else:
+				if (len(data) == 0):
+					print 'data is 0'
+					break;
+				# print 'recv data, len is ', len(data)
+				with open(upload_file.decode('utf‑8'), 'ab+') as f:
+					f.write(data)
+					print 'finish...'
+					s.close()
+
+def main():
+	if (len(sys.argv) == 2):
+		port = int(sys.argv[1])
+	else:
+		port = pc_port
+		client_test(port)
+		
+if __name__=='__main__':
+	main()
+```
+
+借用adb工具配置好forward相关功能，并执行python脚本adb_record.py开始都等待获取录音数据
+
+```
+adb shell af ‑p 20191 ‑r
+adb forward tcp:11112 tcp:20191
+./adb_record.py &
+```
+
+#### 小机端使用方法
+
+##### 使用 alsa 插件录音
+
+可以通过串口，或者adb让设备进行录音，下面以adb方式举例：
+
+录音60s:
+
+```
+adb shell arecord ‑DCaptureFile ‑d 60
+```
+
+一直录音：
+
+```c
+adb shell arecord ‑DCaptureFile ‑l
+```
+
+如果想终止录音，可以再起一个终端输入命令：
+
+```
+adb shell arecord ‑k
+```
+
+这里arecord命令指定的pcm设备是CaptureFile, 通过alsa_config.c配置文件发现这是一个file插件，也就是说录音数据会经过file插件处理(通过adb发送数据到PC端)
+
+## 相关操作
+### 声卡驱动的加载
+
+声卡配置位于代码中, 路径如下：
+
+在每个方案目录下面：
+```
+projects/方案/src/card_default.c
+```
+如果是dsp方案，该文件会在rtos‑hal仓库下：
+```
+rtos‑hal/hal/source/sound/card_default.c
+```
+使用snd_card_register函数进行声卡的注册
+```c
+int snd_card_register(const char *name, struct snd_codec *codec, int platform_type)
+```
+- name:  表示声卡的名字，aw‑alsa‑lib中都需要通过该名字找到对应的声卡
+- codec: codec结构体，根据实际使用的codec进行配置
+- platform_type: 与linux中ASOC框架类似，也需要指定使用哪种类型的platform,如CPUDAI, DAUDIO等
+
+举例：
+
+注册R128 audiocodecdac声卡
+```c
+card_name = "audiocodecdac";
+snd_card_register(card_name, audio_codec, SND_PLATFORM_TYPE_CPUDAI_DAC);
+```
+
+### 声卡加载配置
+
+`snd_pcm_open` 打开的声卡名字都是由 `alsa_config.c` 中配置的，该文件一般在：
+
+在每个方案目录下面：
+```
+projects/方案/src/alsa_config.c
+```
+如果是dsp方案，该文件会在rtos‑hal仓库下：
+```
+rtos‑hal/hal/source/sound/component/aw‑tiny‑alsa‑lib/alsa_config.c
+```
+配置举例：
+```c
+static DEFINE_SND_PCM_HW_CONFIG(audiocodec, 0);
+const snd_pcm_config_t snd_pcm_global_configs[] = {
+	SND_PCM_CONFIG("hw:audiocodec", "hw", &snd_audiocodec_hw_config),
+};
+```
+表示`snd_pcm_open`可用"hw:audiocodec"名字打开声卡，而底层声卡名字是audiocodec。
+
+### 音量设置
+录音或者播放，会出现声音过小或者过大的问题。目前可以调整音量的有两处：
+
+#### 硬件音量调整
+可以通过 amixer 去调整控件。
+对于 dac 来说，硬件音量分为 DAC Digtal volume 和 LINEOUT volume
+
+```
+amixer ‑c audiocodecdac
+numid=0, name='DACL dig volume'
+value=129, min=0, max=255
+numid=1, name='DACR dig volume'
+value=129, min=0, max=255
+numid=2, name='LINEOUT volume'
+value=5, min=0, max=7
+
+amixer ‑c audiocodecdac set 0 150
+amixer ‑c audiocodecdac set 1 150
+
+dig volume是硬件的数字音量调节。
+amixer ‑c audiocodecdac set 2 5
+这个是输出的增益。
+```
+上述两组硬件音量，需要根据硬件来设置，过大会导致声音出现失真。  
+对于 adc 来说，硬件音量有 ADC Digtal volume 和 adc pga gain
+```
+amixer ‑c audiocodecadc
+numid=0, name='ADC1 volume'
+value=129, min=0, max=255
+numid=1, name='ADC2 volume'
+value=129, min=0, max=255
+numid=2, name='ADC3 volume'
+value=129, min=0, max=255
+numid=3, name='MIC1 volume'
+value=31, min=0, max=31
+numid=4, name='MIC2 volume'
+value=31, min=0, max=31
+numid=5, name='MIC3 volume'
+value=31, min=0, max=31
+
+amixer ‑c audiocodecadc set 0 150
+ADC1 volume指的是ADC Digtal volume
+
+amixer ‑c audiocodecadc set 3 19
+MIC1 volume指的是硬件pga gain。
+```
+上述硬件音量，需要根据硬件来设置，过大会导致声音出现失真。
+
+#### 软件音量调整
+对于使用 aw‑alsa‑lib 的系统，可以使用 softvol 插件。
+该插件可以生成一个用于调整音量的控件 “Soft Volume Master”。
+
+```
+amixer ‑c audiocodec
+numid=5, name='Soft Volume Master'
+value=255, min=0, max=255
+
+amixer ‑c audiocodec set 5 200
+```
+对于使用 aw‑tiny‑alsa‑lib 的系统，配置 AudioSystem 后，才能可以使用 softvol plugin，默认会
+配置软件音量调节的功能。
+
+```
+as_volume ‑h
+Usgae: as_volume [option]
+    ‑h, as_volume help
+    ‑t, volume type
+        1:system
+        2:music
+    ‑m, option mode
+        0:get
+        1:set
+        2:get range
+
+as_volume ‑t 1 ‑m 2
+softvol(1) read, min=0, max=10
+
+as_volume ‑t 2 ‑m 2
+softvol(2) read, min=0, max=10
+
+设置system类型的音频曲线
+as_volume ‑t 1 ‑m 1 8
+softvol(1) write, value=8,8
+
+读取system类型的音频曲线
+as_volume ‑t 1 ‑m 0
+softvol(1) read, value=8,8
+
+设置music类型的音频曲线
+as_volume ‑t 2 ‑m 1 8
+softvol(2) write, value=8,8
+
+读取music类型的音频曲线
+as_volume ‑t 2 ‑m 0
+softvol(2) read, value=8,8
+```
 
 ## FAQ
 
@@ -2019,6 +3729,131 @@ numid=2,iface=MIXER,name='rx sync mode'
    以上正常情况下，示波器查看DMIC CLK 的频率是否满足`clk_rate = sample * over_sample_rate`关系。
 
 3. 排查硬件连接和DMIC 物料问题。
+
+#### 外放无声
+使用 aplay 进行播放，发现外放无声。通常需要排查三个方面。
+1. 通路是否正确配置
+```
+amixer ‑c audiocodecdac
+numid=3, name='LINEOUTL switch'
+value=on, enum=off on
+
+设置lineout通路
+amixer ‑c audiocodecdac set 3 1
+```
+2. 查看 gpio 是否正确配置
+```
+board/r128s2/pro/configs/sys_config.fex
+[audiocodec]
+dacl_vol = 129
+dacr_vol = 129
+lineout_vol = 5
+lineoutl_en = 1
+lineoutr_en = 0
+mic1_gain = 19
+mic2_gain = 19
+mic3_gain = 0
+mic1_en = 1
+mic2_en = 1
+mic3_en = 1
+mad_bind_en = 0
+pa_pin_msleep = 10
+pa_pin = port:PB3<1><default><1><1>
+capture_cma = 30720
+```
+3. 查看音量是否设置为 0
+
+#### AudioSystem 接口创建实例失败
+```
+as_test ‑s 2 ‑d 5 ‑n playback ‑r 48000 ‑c 2
+
+[RV‑AudioTrack‑ERR][AudioTrackCreateWithStream](562) mt add at failed
+at create failed
+```
+打开 as_debug
+```
+as_debug 1
+set audio system debug:1
+[RV‑AudioSystem‑INF][print_test](47) Audio System test
+[RV‑AudioSystem‑DBG][print_test](48) Audio System test
+[RV‑AudioSystem‑ERR][print_test](49) Audio System test
+```
+
+再次播放
+```
+as_test ‑s 2 ‑d 5 ‑n playback ‑r 48000 ‑c 2
+[RV‑AudioTrack‑DBG][AudioTrackCreateWithStream](540)
+[RV‑MixerThread‑DBG][MixerThreadAddAT](445)
+[RV‑AudioHW‑DBG][find_alias_name](146) ahw alias name:playback vs playback stream:0
+[RV‑AudioHW‑DBG][find_alias_name](146) ahw alias name:amp‑cap vs playback stream:0
+[RV‑AudioTrack‑ERR][AudioTrackCreateWithStream](562) mt add at failed
+at create failed
+```
+声卡驱动在 RV 核，不可能会使用跨核接口 “amp‑cap”。使用 ahw_list 查看
+```
+c906> ahw_list
+
+audio hw list:
+instance |name |read |write
+‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑
+audio hw alias:
+p: default ‑‑> playback
+c: default ‑‑> amp‑cap
+```
+说明 audio_hw 中没有本地的 audio_hw_elem。在开机的时候，并没有初始化 AudioSystem 导致缺少本地 audio_hw_elem。
+
+在启动中加上下面的代码，最好是加在声卡注册后。
+`lichee/rtos/projects/r128s2/pro_c906/src/main.c`
+
+```c
+#ifdef CONFIG_COMPONENTS_AW_AUDIO_SYSTEM
+AudioSystemInit();
+#endif
+```
+#### AudioSystem 接口播放失败
+```
+c906> as_test ‑s 2 ‑d 5 ‑n playback ‑r 48000 ‑c 2
+
+[RV‑AP‑chmap‑INF][chmap_ap_update_mode](151) ALL ‑> ch0(average)
+[AWALSA_ERR][_snd_pcm_hw_open:452]no such card:audiocodec
+[AWALSA_ERR][snd_pcm_open:258]pcm "hw:audiocodec": snd_pcm_open_config failed (return: ‑19)
+[RV‑AudioHWPCM‑ERR][pcm_ahw_open](221) pcm open failed:‑19
+[RV‑AudioTrack‑ERR][__AudioTrackWrite](397) writw error(MT transfer data error?)
+[RV‑AudioTrack‑ERR][_AudioTrackWrite](505) write_size=480, in_size=480, written=‑1
+at write return ‑1
+```
+上述 log 可以很明显的看到，声卡的名字不匹配，导致打开声卡失败。查看声卡的名字，以 R128 为例。
+
+```
+c906>soundcard ‑l
+Sound Card list:
+card_num card_name
+    0 audiocodecdac
+```
+改为0 声卡，正常播放
+```
+c906> as_test ‑s 0 ‑d 5 ‑n playback ‑r 48000 ‑c 2
+```
+
+#### AudioSystem 接口录音失败
+
+输入的指令是正确的，但是设置参数却失败。log如下
+```
+as_test ‑s 1 ‑d 3 ‑c 2 ‑m amp ‑t
+
+[RV‑AudioRecord‑INF][AudioRecordParamSetup](153) create tbuf:0000000008313AA0, 1920
+[RV‑AP‑chmap‑INF][chmap_ap_update_mode](153) ch0 ‑> ch0
+[SND_ERR][sunxi_codec_hw_params:1036]capture only support 1~3 channel
+[RV‑AP‑chmap‑INF][chmap_ap_update_mode](153) ch1 ‑> ch1
+[SND_ERR][soc_pcm_hw_params:434]codec_dai set hw params failed
+[ar_task] line:549 buf:00000000083EE960, 192000
+Unable to install hw prams!
+c906>[DSP‑AudioRecord‑ERR][__AudioRecordRead](228) read error(ST transfer data error?)
+AudioRecordReadRM failed!!, return ‑1
+```
+这个问题也比较常见，因为驱动增加了检查，没有设置通路，直接录音就会导致这个错误。跟外放无声类似，出现录音失败或无声的问题，也是按照下面的顺序排查。
+1. 录音通路是否正确配置。
+2. 录音音量是否设置为 0。
 
 ## 其他
 
