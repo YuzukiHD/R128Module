@@ -24,7 +24,8 @@
 - 应用开发案例
   - [LVGL](demo/lvgl.md)
 - 基础组件开发指南
-  - [多媒体](sdk_base/multimedia.md)
+  - [多媒体解码](sdk_base/multimedia_dec.md)
+  - [多媒体编码](sdk_base/multimedia_ced.md)
   - [音频框架](sdk_base/audio.md)
   - [显示框架](sdk_base/disp.md)
   - [安全](sdk_base/sos.md)
