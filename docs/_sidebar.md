@@ -57,7 +57,8 @@
   - [Smart Card](sdk_module/smartcard.md)
   - [SPI](sdk_module/spi.md)
   - [USB](sdk_module/usb.md)
-- 应用调试案例
+- 调试指南
+  - [调试指南](debug/debug_info.md)
   - [内存泄漏](debug/memleak.md)
 - 其他
   - [FAQ](others/faq.md)
