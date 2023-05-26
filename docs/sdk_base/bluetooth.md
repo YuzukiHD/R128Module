@@ -1312,5 +1312,39 @@ enum cmd_status btcli_a2dp_sink(char *cmd)
 5. bt_manager 默认没有集成蓝牙回连的功能，用户可以基于 btmg_a2dp_sink_connect 接口进行功能实现；
 6. 音频数据的处理默认在 bt_manager 内部处理播放，用户如果需要直接获取音频数据做音效等处理，打开 CONFIG_A2DP_SINK_AUDIO_CB 宏后，应用可以通过 stream_cb 拿到数据；
 
+### AVRCP 开发
 
+AVRCP 分为 AVRCP CT 和 AVRCP TG 两个角色，一个设备可以同时拥有该两种角色。
+
+以蓝牙音箱为例:
+
+- 手机连接音箱播放音乐，音箱端可以通过 AVRCP 控制手机上下曲控制等，此时手机作为被控制方，是 AVRCP TG，音箱是控制方，是 AVRCP CT；
+- 手机和音箱都支持绝对音量，手机端可以通过 AVRCP 设置音箱音量，并通过 RegisterNotification 注册音量变化的通知事件，音箱音量变化后，手机会收到音箱的 RegisterNotification response 通知。这种情况手机作为 AVRCP CT，音箱作为 AVRCP TG；
+
+####  AVRCP CT API
+
+| API 接口                          | 说明                         |
+| --------------------------------- | ---------------------------- |
+| btmg_avrc_ct_send_passthrough_cmd | 发送命令控制 AVRCP TG        |
+| btmg_avrc_set_absolute_volume     | 发送命令设置 AVRCP TG 的音量 |
+| btmg_avrc_get_absolute_volume     | 发送命令获取音量             |
+
+#### AVRCP TG API
+
+| API 接口                      | 说明                                                         |
+| ----------------------------- | ------------------------------------------------------------ |
+| btmg_avrc_set_absolute_volume | 此接口同样适用 AVRCP TG，内部设置好本地音量变化后，也会通知 AVRCP CT |
+| btmg_avrc_get_absolute_volume | 发送命令获取音量                                             |
+
+AVRCP TG 目前只有 1 个 API，其重点是回调函数，有如下 callback 使用：
+
+```c
+typedef struct {
+    bt_avrcp_ct_play_state_cb avrcp_ct_play_state_cb; //ct播放状态
+    bt_avrcp_ct_track_changed_cb avrcp_ct_track_changed_cb; //歌曲信息&歌词信息
+    bt_avrcp_ct_play_position_cb avrcp_ct_play_position_cb; //播放进度条信息
+    bt_avrcp_tg_play_state_cb avrcp_tg_play_state_cb; //tg播放状态
+    bt_avrcp_audio_volume_cb avrcp_audio_volume_cb; //音量大小
+} btmg_avrcp_callback_t;
+```
 
