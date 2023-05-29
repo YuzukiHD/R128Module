@@ -2690,5 +2690,445 @@ btmg_unregister_callback(void);
 
 还需要关注释放应用额外申请的内存资源等。
 
+### HFP HF 开发
 
+####  HFP HF API
+
+| API 接口                                  | 说明                                                     |
+| ----------------------------------------- | -------------------------------------------------------- |
+| btmg_hfp_hf_connect                       | 连接指定设备                                             |
+| btmg_hfp_hf_disconnect                    | 断开与指定设备的连接                                     |
+| btmg_hfp_hf_start_voice_recognition       | 开启语音识别                                             |
+| btmg_hfp_hf_stop_voice_recognition        | 关闭语音识别                                             |
+| btmg_hfp_hf_spk_vol_update                | 更新扩音器音量                                           |
+| btmg_hfp_hf_mic_vol_update                | 更新麦克风音量                                           |
+| btmg_hfp_hf_dial                          | 指定号码拨打电话                                         |
+| btmg_hfp_hf_dial_memory                   | 快速拨号，手机必须有设置快速拨号的号码                   |
+| btmg_hfp_hf_send_chld_cmd                 | 多方通话控制                                             |
+| btmg_hfp_hf_send_btrh_cmd                 | 发送响应和保持动作的命令                                 |
+| btmg_hfp_hf_answer_call                   | 接听来电                                                 |
+| btmg_hfp_hf_reject_call                   | 拒绝来电                                                 |
+| btmg_hfp_hf_query_calls                   | 查询当前通话列表                                         |
+| btmg_hfp_hf_query_operator                | 查询当前选择的网络运营商名称                             |
+| btmg_hfp_hf_query_number                  | 查阅本机号码                                             |
+| btmg_hfp_hf_send_dtmf                     | 在通话过程中传输 DTMF 码，即在通话过程中使用键盘输入内容 |
+| btmg_hfp_hf_request_last_voice_tag_number | 向 AG 请求与最后录制的语音标签相对应的电话号码           |
+| btmg_hfp_hf_send_nrec                     | 关闭回声消除和降噪                                       |
+
+#### HFP HF API 调用流程
+
+```c
+#include <AudioSystem.h>
+
+static enum cmd_status btcli_hfp_help(char *cmd);
+
+static const char *s_hfp_event_str[] = { "BTMG_HFP_HF_BVRA_EVT",
+                                         "BTMG_HFP_HF_CIND_CALL_EVT",
+                                         "BTMG_HFP_HF_CIND_CALL_SETUP_EVT",
+                                         "BTMG_HFP_HF_CIND_CALL_HELD_EVT",
+                                         "BTMG_HFP_HF_CIND_SERVICE_AVAILABILITY_EVT",
+                                         "BTMG_HFP_HF_CIND_SIGNAL_STRENGTH_EVT",
+                                         "BTMG_HFP_HF_CIND_ROAMING_STATUS_EVT",
+                                         "BTMG_HFP_HF_CIND_BATTERY_LEVEL_EVT",
+                                         "BTMG_HFP_HF_COPS_CURRENT_OPERATOR_EVT",
+                                         "BTMG_HFP_HF_BTRH_EVT",
+                                         "BTMG_HFP_HF_CLIP_EVT",
+                                         "BTMG_HFP_HF_CCWA_EVT",
+                                         "BTMG_HFP_HF_CLCC_EVT",
+                                         "BTMG_HFP_HF_VOLUME_CONTROL_EVT",
+                                         "BTMG_HFP_HF_CNUM_EVT",
+                                         "BTMG_HFP_HF_BSIR_EVT",
+                                         "BTMG_HFP_HF_BINP_EVT",
+                                         "BTMG_HFP_HF_RING_IND_EVT" };
+
+static const char *_hfp_event_to_string(btmg_hfp_hf_event_t event)
+{
+    return s_hfp_event_str[event - 2];
+}
+
+#ifdef XRADIO_HFP_ADJUST_VOLUME
+#define XRADIO_AMIXER_HFP_MAX 63
+static uint8_t bluedroid_amixer(uint8_t volume)
+{
+    int ret = 0;
+    int type = AUDIO_STREAM_SYSTEM;
+    uint32_t volume_value = 0;
+    uint8_t max_volume = 0;
+
+    ret = softvol_control_with_streamtype(type, &volume_value, 2);
+    if (ret != 0) {
+        CMD_ERR("get softvol range failed:%d\n", ret);
+        return -1;
+    }
+    max_volume = (volume_value >> 16) & 0xffff;
+    volume_value = (value * max_volume / 100) & 0xffff;
+    ret = softvol_control_with_streamtype(type, &volume_value, 1);
+    if (ret != 0) {
+        CMD_ERR("set softvol failed:%d\n", ret);
+        return -1;
+    }
+
+    return ret;
+}
+#endif
+
+void btcli_hfp_hf_connection_state_cb(const char *bd_addr, btmg_hfp_hf_connection_state_t state)
+{
+    if (state == BTMG_HFP_HF_DISCONNECTED) {
+        CMD_DBG("hfp hf disconnected with device: %s\n", bd_addr);
+    } else if (state == BTMG_HFP_HF_CONNECTING) {
+        CMD_DBG("hfp hf connecting with device: %s\n", bd_addr);
+    } else if (state == BTMG_HFP_HF_CONNECTED) {
+        CMD_DBG("hfp hf connected with device: %s\n", bd_addr);
+    } else if (state == BTMG_HFP_HF_SLC_CONNECTED) {
+        CMD_DBG("hfp hf slc_connected with device: %s\n", bd_addr);
+    } else if (state == BTMG_HFP_HF_DISCONNECTING) {
+        CMD_DBG("hfp hf disconnecting with device: %s\n", bd_addr);
+    }
+}
+
+void btcli_hfp_hf_event_cb(btmg_hfp_hf_event_t event, void *data)
+{
+    CMD_DBG("event:%s \n", _hfp_event_to_string(event));
+}
+
+/* btcli hfp voice_rec <0/1> */
+static enum cmd_status btcli_hfp_voice_recognition(char *cmd)
+{
+    btmg_err ret;
+    int start = 0;
+
+    /* get param */
+    int cnt = cmd_sscanf(cmd, "%d ", &start);
+    if (cnt != 1) {
+        CMD_ERR("invalid param number %d\n", cnt);
+        return CMD_STATUS_INVALID_ARG;
+    }
+
+    if (start == 1) {
+        if ((ret = btmg_hfp_hf_start_voice_recognition()) != BT_OK) {
+            CMD_ERR("return failed: %d\n", ret);
+            return CMD_STATUS_FAIL;
+        }
+    } else if (start == 0) {
+        if ((ret = btmg_hfp_hf_stop_voice_recognition() != BT_OK)) {
+            CMD_ERR("return failed: %d\n", ret);
+            return CMD_STATUS_FAIL;
+        }
+    } else {
+        CMD_ERR("invalid param %d\n", start);
+        return CMD_STATUS_INVALID_ARG;
+    }
+
+    return CMD_STATUS_OK;
+}
+
+/* btcli hfp vol_update <spk/mic> <vol> */
+static enum cmd_status btcli_hfp_vol_update(char *cmd)
+{
+    btmg_err ret;
+    char devc[10] = { 0 };
+    int vol;
+
+    /* get param */
+    int cnt = cmd_sscanf(cmd, "%s %d", devc, &vol);
+    if (cnt != 2) {
+        CMD_ERR("invalid param number %d\n", cnt);
+        return CMD_STATUS_INVALID_ARG;
+    }
+
+    if (!cmd_strcmp(devc, "spk")) {
+        if ((ret = btmg_hfp_hf_spk_vol_update(vol)) != BT_OK) {
+            CMD_ERR("return failed: %d\n", ret);
+            return CMD_STATUS_FAIL;
+        }
+#ifdef XRADIO_HFP_ADJUST_VOLUME
+        int ret = -1;
+        CMD_DBG("adjusting the volume by ourselves\n");
+        vol = XRADIO_AMIXER_HFP_MAX - (uint32_t)vol * 4;
+        CMD_DBG("volume is %d\n", vol);
+        ret = bluedroid_amixer(vol);
+        if (ret != XR_OK) {
+            CMD_ERR("Set vol by ourself failed \n");
+        }
+#endif
+    } else if (!cmd_strcmp(devc, "mic")) {
+        if ((ret = btmg_hfp_hf_mic_vol_update(vol)) != BT_OK) {
+            CMD_ERR("return failed: %d\n", ret);
+            return CMD_STATUS_FAIL;
+        }
+    } else {
+        CMD_ERR("invalid param %s\n", devc);
+        return CMD_STATUS_INVALID_ARG;
+    }
+
+    return CMD_STATUS_OK;
+}
+
+/* btcli hfp dial 10086 */
+static enum cmd_status btcli_hfp_dial(char *cmd)
+{
+    btmg_err ret;
+    char number[30] = { 0 };
+
+    /* get param */
+    int cnt = cmd_sscanf(cmd, "%s", number);
+    if (cnt != 1) {
+        CMD_ERR("invalid param number %d\n", cnt);
+        return CMD_STATUS_INVALID_ARG;
+    }
+
+    if ((ret = btmg_hfp_hf_dial(number)) != BT_OK) {
+        CMD_ERR("return failed: %d\n", ret);
+        return CMD_STATUS_FAIL;
+    }
+
+    return CMD_STATUS_OK;
+}
+
+/* btcli hfp dial_mem 2 */
+static enum cmd_status btcli_hfp_dial_mem(char *cmd)
+{
+    btmg_err ret;
+    int loc;
+
+    /* get param */
+    int cnt = cmd_sscanf(cmd, "%d", &loc);
+    if (cnt != 1) {
+        CMD_ERR("invalid param number %d\n", cnt);
+        return CMD_STATUS_INVALID_ARG;
+    }
+
+    if ((ret = btmg_hfp_hf_dial_memory(loc)) != BT_OK) {
+        CMD_ERR("return failed: %d\n", ret);
+        return CMD_STATUS_FAIL;
+    }
+
+    return CMD_STATUS_OK;
+}
+
+/* btcli hfp chld 0 0 */
+static enum cmd_status btcli_hfp_chld(char *cmd)
+{
+    btmg_err ret;
+    int chld;
+    int idx = 0;
+
+    /* get param */
+    int cnt = cmd_sscanf(cmd, "%d %d", &chld, &idx);
+    if (cnt != 2 && (chld == BTMG_HF_CHLD_TYPE_REL_X || chld == BTMG_HF_CHLD_TYPE_PRIV_X)) {
+        CMD_ERR("invalid param number %d\n", cnt);
+        return CMD_STATUS_INVALID_ARG;
+    }
+
+    if ((ret = btmg_hfp_hf_send_chld_cmd((btmg_hf_chld_type_t)chld, idx)) != BT_OK) {
+        CMD_ERR("return failed: %d\n", ret);
+        return CMD_STATUS_FAIL;
+    }
+
+    return CMD_STATUS_OK;
+}
+
+/* btcli hfp btrh <hold/accept/reject> */
+static enum cmd_status btcli_hfp_btrh(char *cmd)
+{
+    btmg_err ret;
+    char btrhcmd[10] = { 0 };
+    btmg_hf_btrh_cmd_t btrh;
+
+    /* get param */
+    int cnt = cmd_sscanf(cmd, "%s", btrhcmd);
+    if (cnt != 1) {
+        CMD_ERR("invalid param number %d\n", cnt);
+        return CMD_STATUS_INVALID_ARG;
+    }
+
+    if (!cmd_strcmp(btrhcmd, "hold"))
+        btrh = BTMG_HF_BTRH_CMD_HOLD;
+    else if (!cmd_strcmp(btrhcmd, "accept"))
+        btrh = BTMG_HF_BTRH_CMD_ACCEPT;
+    else if (!cmd_strcmp(btrhcmd, "reject"))
+        btrh = BTMG_HF_BTRH_CMD_REJECT;
+    else {
+        CMD_ERR("invalid param %s\n", btrhcmd);
+        return CMD_STATUS_INVALID_ARG;
+    }
+
+    if ((ret = btmg_hfp_hf_send_btrh_cmd(btrh)) != BT_OK) {
+        CMD_ERR("return failed: %d\n", ret);
+        return CMD_STATUS_FAIL;
+    }
+    return CMD_STATUS_OK;
+}
+
+/* btcli hfp answer */
+static enum cmd_status btcli_hfp_answer(char *cmd)
+{
+    btmg_err ret;
+
+    if ((ret = btmg_hfp_hf_answer_call() != BT_OK)) {
+        CMD_ERR("return failed: %d\n", ret);
+        return CMD_STATUS_FAIL;
+    }
+    return CMD_STATUS_OK;
+}
+
+/* btcli hfp reject */
+static enum cmd_status btcli_hfp_reject(char *cmd)
+{
+    btmg_err ret;
+
+    if ((ret = btmg_hfp_hf_reject_call()) != BT_OK) {
+        CMD_ERR("return failed: %d\n", ret);
+        return CMD_STATUS_FAIL;
+    }
+    return CMD_STATUS_OK;
+}
+
+/* btcli hfp query <call/name> */
+static enum cmd_status btcli_hfp_query(char *cmd)
+{
+    btmg_err ret;
+    char query[10] = { 0 };
+
+    /* get param */
+    int cnt = cmd_sscanf(cmd, "%s", query);
+    if (cnt != 1) {
+        CMD_ERR("invalid param number %d\n", cnt);
+        return CMD_STATUS_INVALID_ARG;
+    }
+
+    if (!cmd_strcmp(query, "call")) {
+        if ((ret = btmg_hfp_hf_query_calls()) != BT_OK) {
+            CMD_ERR("return failed: %d\n", ret);
+            return CMD_STATUS_FAIL;
+        }
+    } else if (!cmd_strcmp(query, "name")) {
+        if ((ret = btmg_hfp_hf_query_operator()) != BT_OK) {
+            CMD_ERR("return failed: %d\n", ret);
+            return CMD_STATUS_FAIL;
+        }
+    } else {
+        CMD_ERR("invalid param %s\n", query);
+        return CMD_STATUS_INVALID_ARG;
+    }
+
+    return CMD_STATUS_OK;
+}
+
+/* btcli hfp number */
+static enum cmd_status btcli_hfp_phone_number(char *cmd)
+{
+    btmg_err ret;
+
+    if ((ret = btmg_hfp_hf_query_number()) != BT_OK) {
+        CMD_ERR("return failed: %d\n", ret);
+        return CMD_STATUS_FAIL;
+    }
+    return CMD_STATUS_OK;
+}
+
+/* btcli hfp dtmf <0-9/#/ * > */
+static enum cmd_status btcli_hfp_dtmf(char *cmd)
+{
+    btmg_err ret;
+    char c = '\0';
+
+    /* get param */
+    int cnt = cmd_sscanf(cmd, "%c", &c);
+    if (cnt != 1) {
+        CMD_ERR("invalid param number %d\n", cnt);
+        return CMD_STATUS_INVALID_ARG;
+    }
+
+    if ((ret = btmg_hfp_hf_send_dtmf(c)) != BT_OK) {
+        CMD_ERR("return failed: %d\n", ret);
+        return CMD_STATUS_FAIL;
+    }
+    return CMD_STATUS_OK;
+}
+
+/* btcli hfp last_vnum */
+static enum cmd_status btcli_hfp_last_vnum(char *cmd)
+{
+    btmg_err ret;
+
+    if ((ret = btmg_hfp_hf_request_last_voice_tag_number()) != BT_OK) {
+        CMD_ERR("return failed: %d\n", ret);
+        return CMD_STATUS_FAIL;
+    }
+    return CMD_STATUS_OK;
+}
+
+/* btcli hfp nrec_close */
+static enum cmd_status btcli_hfp_nrec_close(char *cmd)
+{
+    btmg_err ret;
+
+    if ((ret = btmg_hfp_hf_send_nrec()) != BT_OK) {
+        CMD_ERR("return failed: %d\n", ret);
+        return CMD_STATUS_FAIL;
+    }
+    return CMD_STATUS_OK;
+}
+
+static const struct cmd_data hfp_cmds[] = {
+    { "voice_rec",  btcli_hfp_voice_recognition,  CMD_DESC("<state：1/0>") },
+    { "vol_update", btcli_hfp_vol_update,         CMD_DESC("<spk/mic> <vol>")},
+    { "dial",       btcli_hfp_dial,               CMD_DESC("<phone_num>")},
+    { "dial_mem",   btcli_hfp_dial_mem,           CMD_DESC("<local>")},
+    { "chld",       btcli_hfp_chld,               CMD_DESC("<type：0~6> <index>")},
+    { "btrh",       btcli_hfp_btrh,               CMD_DESC("<hold/accept/reject>")},
+    { "answer",     btcli_hfp_answer,             CMD_DESC("No parameters")},
+    { "reject",     btcli_hfp_reject,             CMD_DESC("No parameters")},
+    { "query",      btcli_hfp_query,              CMD_DESC("<call/name>")},
+    { "number",     btcli_hfp_phone_number,        CMD_DESC("No parameters")},
+    { "dtmf",       btcli_hfp_dtmf,               CMD_DESC("<code：0-9，#，*，A-D>")},
+    { "last_vnum",  btcli_hfp_last_vnum,          CMD_DESC("No parameters")},
+    { "nrec_close", btcli_hfp_nrec_close,         CMD_DESC("No parameters")},
+    { "help",       btcli_hfp_help,               CMD_DESC(CMD_HELP_DESC) },
+};
+
+static enum cmd_status btcli_hfp_help(char *cmd)
+{
+	return cmd_help_exec(hfp_cmds, cmd_nitems(hfp_cmds), 10);
+}
+
+enum cmd_status btcli_hfp(char *cmd)
+{
+    return cmd_exec(cmd, hfp_cmds, cmd_nitems(hfp_cmds));
+}
+```
+
+##### 初始化
+
+1.  总回调结构体是 btmg_callback_t，先设置 hfp hf 的回调函数；
+2. 调用 btmg_core_init 初始化 bt_manager;
+3. 调用 btmg_register_callback 注册步骤 1 设置好的回调函数；
+4. 调用 btmg_set_profile(BTMG_HFP_HF) 使能蓝牙 Profile；如果与 A2DP Sink 一起使用，调用 btmg_set_profile(BTMG_HFP_HF | BTMG_A2DP_SINK )；
+5. 调用 btmg_adapter_enable(true) 使能蓝牙；
+6. 蓝牙使能成功后触发 state_cb，参考 btcli_adapter_status_cb；
+7. 在 state_cb 中调用 btmg_adapter_set_name，设置蓝牙名称；
+8. 在 state_cb 中调用 btmg_adapter_set_io_capability，设置 io_capability 能力；
+9. 在 state_cb 中调用 btmg_adapter_set_scanmode，设置发现模式；
+
+##### 设备连接
+
+1. 初始化完成后，手机可以搜索与连接，连接的回调函数 btmg_hfp_hf_cb.conn_state_cb。在连接过程中，会存在 AT 命令的交互，因此会收到相关 AT 的事件，在btmg_hfp_hf_cb.event_cb 回调上来，在示例中只是把相关事件打印出来。
+2. 如果需要主动连接与断开，使用 btmg_hfp_hf_connect 或 btmg_hfp_hf_disconnect 接口。
+
+##### 通话与控制
+
+1. 手机收到来电，并且手机端主动接听电话后，设备会接管手机的通话功能，通话的声音会在设备扬声器播放，通话的录音也会使用设备的麦克风。当前播放和录音的处理放在 bt_manager内部处理，后续计划透出相关的数据 cb；
+2. 如果需要在设备上接听电话，挂断电话等控制，一般需要通过发送 AT 命令，相关的命令已经通过 API 的方式集成，用户可以参考 btcli_hfp.c 相关命令的实现。
+
+##### 反初始化
+
+反初始化参考 btcli_deinit，主要是以下函数：
+
+```c
+btmg_adapter_enable(false);
+btmg_core_deinit();
+btmg_unregister_callback(void);
+```
 
