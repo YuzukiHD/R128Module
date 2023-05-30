@@ -3132,3 +3132,1725 @@ btmg_core_deinit();
 btmg_unregister_callback(void);
 ```
 
+### SPP Client 开发
+
+SPP Profile 一般用于数据透传，常见应用是连接蓝牙打印机发送打印数据。
+
+#### SPP Client API
+
+| API 接口             | 说明                 |
+| -------------------- | -------------------- |
+| btmg_sppc_connect    | 连接 SPP Server 设备 |
+| btmg_sppc_disconnect | 断开与对端设备连接   |
+| btmg_sppc_write      | 发送数据给对端设备   |
+
+#### SPP Client API 调用流程
+
+HFP HF 功能的使用示例：
+
+```c
+#include <stdint.h>
+#include <string.h>
+#include <stdbool.h>
+#include <stdio.h>
+
+#include "cmd_util.h"
+#include "bt_manager.h"
+
+static enum cmd_status btcli_sppc_help(char *cmd);
+
+void btcli_sppc_conn_status_cb(const char *bd_addr, btmg_spp_connection_state_t state)
+{
+    if (state == BTMG_SPP_DISCONNECTED) {
+        CMD_DBG("spp client disconnected with device: %s\n", bd_addr);
+    } else if (state == BTMG_SPP_CONNECTING) {
+        CMD_DBG("spp client connecting with device: %s\n", bd_addr);
+    } else if (state == BTMG_SPP_CONNECTED) {
+        CMD_DBG("spp client connected with device: %s\n", bd_addr);
+    } else if (state == BTMG_SPP_DISCONNECTING) {
+        CMD_DBG("spp client disconnecting with device: %s\n", bd_addr);
+    } else if (state == BTMG_SPP_CONNECT_FAILED) {
+        CMD_DBG("spp client connect with device: %s failed!\n", bd_addr);
+    } else if (state == BTMG_SPP_DISCONNEC_FAILED) {
+        CMD_DBG("spp client disconnect with device: %s failed!\n", bd_addr);
+    }
+}
+
+void btcli_sppc_recvdata_cb(const char *bd_addr, char *data, int data_len)
+{
+    char recv_data[data_len + 1];
+
+    memcpy(recv_data, data, data_len);
+    recv_data[data_len] = '\0';
+
+    CMD_DBG("sppc recv from dev:[%s],[len=%d][data:%s]\n", bd_addr, data_len,
+            recv_data);
+}
+
+/* btcli sppc connect <device mac> */
+static enum cmd_status btcli_sppc_connect(char *cmd)
+{
+    int argc;
+    char *argv[1];
+
+    argc = cmd_parse_argv(cmd, argv, 1);
+    if (argc != 1) {
+        CMD_ERR("invalid param number %d\n", argc);
+        return CMD_STATUS_INVALID_ARG;
+    }
+
+    btmg_sppc_connect(argv[0]);
+
+    return CMD_STATUS_OK;
+}
+
+/* btcli sppc disconnect <device mac> */
+static enum cmd_status btcli_sppc_disconnect(char *cmd)
+{
+    int argc;
+    char *argv[1];
+
+    argc = cmd_parse_argv(cmd, argv, 1);
+    if (argc != 1) {
+        CMD_ERR("invalid param number %d\n", argc);
+        return CMD_STATUS_INVALID_ARG;
+    }
+
+    btmg_sppc_disconnect(argv[0]);
+
+    return CMD_STATUS_OK;
+}
+
+/* btcli sppc write <data> */
+static enum cmd_status btcli_sppc_write(char *cmd)
+{
+    int argc;
+    char *argv[1];
+
+    argc = cmd_parse_argv(cmd, argv, 1);
+    if (argc != 1) {
+        CMD_ERR("invalid param number %d\n", argc);
+        return CMD_STATUS_INVALID_ARG;
+    }
+
+    btmg_sppc_write(argv[0], strlen(argv[0]));
+
+    return CMD_STATUS_OK;
+}
+
+static const struct cmd_data sppc_cmds[] = {
+    { "connect",    btcli_sppc_connect,     CMD_DESC("<device mac>")},
+    { "disconnect", btcli_sppc_disconnect,  CMD_DESC("<device mac>")},
+    { "write",      btcli_sppc_write,       CMD_DESC("<data>")},
+    { "help",       btcli_sppc_help,      CMD_DESC(CMD_HELP_DESC)},
+};
+
+/* btcli sppc help */
+static enum cmd_status btcli_sppc_help(char *cmd)
+{
+	return cmd_help_exec(sppc_cmds, cmd_nitems(sppc_cmds), 10);
+}
+
+enum cmd_status btcli_sppc(char *cmd)
+{
+    return cmd_exec(cmd, sppc_cmds, cmd_nitems(sppc_cmds));
+}
+```
+
+##### 初始化
+
+1. 总回调结构体是 btmg_callback_t，先设置 spp client 的回调函数；
+2. 调用 btmg_core_init 初始化 bt_manager;
+3. 调用 btmg_register_callback 注册步骤 1 设置好的回调函数；
+4. 调用 btmg_set_profile(BTMG_SPP_CLIENT) 使能蓝牙 Profile；
+5. 调用 btmg_adapter_enable(true) 使能蓝牙；
+6. 蓝牙使能成功后触发 state_cb，参考 btcli_adapter_status_cb；
+7. 在 state_cb 中调用 btmg_adapter_set_name，设置蓝牙名称；
+8. 在 state_cb 中调用 btmg_adapter_set_io_capability，设置 io_capability 能力；
+9. 在 state_cb 中调用 btmg_adapter_set_scanmode，设置发现模式；
+
+##### 扫描连接
+
+初始化完成后可以发起扫描连接
+
+1. 扫描接口使用 btmg_adapter_start_scan；
+2. 扫描到目标设备后，先使用btmg_adapter_stop_scan停止扫描，再使用btmg_sppc_connect发起连接；连接状态通过回调函数 btmg_sppc_cb.conn_state_cb 上报。
+3. 如果需要主动断开连接使用 btmg_sppc_disconnect；
+
+##### 数据收发
+
+1. 通过 btmg_sppc_write 发送数据；
+2. 如果对端回复数据，会通过 btmg_sppc_cb.recvdata_cb 回调。
+
+### SPP Server 开发
+
+#### SPP Server API
+
+| API 接口             | 说明                                |
+| -------------------- | :---------------------------------- |
+| btmg_spps_start      | 指定 Server Channel 启动 SPP server |
+| btmg_spps_stop       | 停止 SPP server                     |
+| btmg_spps_write      | 发送数据给对端设备                  |
+| btmg_spps_disconnect | 断开设备连接                        |
+
+#### SPP Server API 调用流程
+
+HFP HF 功能的使用示例
+
+```c
+#include <stdint.h>
+#include <string.h>
+#include <stdbool.h>
+#include <stdio.h>
+
+#include "cmd_util.h"
+#include "bt_manager.h"
+
+static enum cmd_status btcli_spps_help(char *cmd);
+
+void btcli_spps_conn_status_cb(const char *bd_addr, btmg_spp_connection_state_t state)
+{
+    if (state == BTMG_SPP_DISCONNECTED) {
+        CMD_DBG("spp server disconnected with device: %s\n", bd_addr);
+    } else if (state == BTMG_SPP_CONNECTING) {
+        CMD_DBG("spp server connecting with device: %s\n", bd_addr);
+    } else if (state == BTMG_SPP_CONNECTED) {
+        CMD_DBG("spp server connected with device: %s\n", bd_addr);
+    } else if (state == BTMG_SPP_DISCONNECTING) {
+        CMD_DBG("spp server disconnecting with device: %s\n", bd_addr);
+    } else if (state == BTMG_SPP_CONNECT_FAILED) {
+        CMD_DBG("spp server connect with device: %s failed!\n", bd_addr);
+    } else if (state == BTMG_SPP_DISCONNEC_FAILED) {
+        CMD_DBG("spp server disconnect with device: %s failed!\n", bd_addr);
+    }
+}
+
+void btcli_spps_recvdata_cb(const char *bd_addr, char *data, int data_len)
+{
+    char recv_data[data_len + 1];
+
+    memcpy(recv_data, data, data_len);
+    recv_data[data_len] = '\0';
+    CMD_DBG("spps recv from dev:[%s][len=%d][data:%s]\n", bd_addr, data_len,
+            recv_data);
+}
+
+/* btcli spps start <scn> */
+static enum cmd_status btcli_spps_start(char *cmd)
+{
+    int argc;
+    int scn = 0;
+    char *argv[1];
+    argc = cmd_parse_argv(cmd, argv, 1);
+
+    if (argc != 1) {
+        CMD_ERR("invalid param number %d\n", argc);
+        return CMD_STATUS_INVALID_ARG;
+    }
+
+    scn = cmd_atoi(argv[0]);
+
+    if (btmg_spps_start(scn) != BT_OK) {
+        CMD_ERR("spps start fail\n");
+    }
+
+    return CMD_STATUS_OK;
+}
+
+/* btcli spps stop */
+static enum cmd_status btcli_spps_stop(char *cmd)
+{
+    int argc;
+    char *argv[1];
+    argc = cmd_parse_argv(cmd, argv, 1);
+
+    if (argc > 1) {
+        CMD_ERR("invalid param number %d\n", argc);
+        return CMD_STATUS_INVALID_ARG;
+    }
+
+    btmg_spps_stop();
+
+    return CMD_STATUS_OK;
+}
+
+/* btcli spps disconnect <device mac> */
+static enum cmd_status btcli_spps_disconnect(char *cmd)
+{
+    int argc;
+    char *argv[1];
+    argc = cmd_parse_argv(cmd, argv, 1);
+
+    if (argc != 1) {
+        CMD_ERR("invalid param number %d\n", argc);
+        return CMD_STATUS_INVALID_ARG;
+    }
+
+    btmg_spps_disconnect(argv[0]);
+
+    return CMD_STATUS_OK;
+}
+
+/* btcli spps write <data>*/
+static enum cmd_status btcli_spps_write(char *cmd)
+{
+    int argc;
+    char *argv[1];
+    argc = cmd_parse_argv(cmd, argv, 1);
+
+    if (argc != 1) {
+        CMD_ERR("invalid param number %d\n", argc);
+        return CMD_STATUS_INVALID_ARG;
+    }
+
+    btmg_spps_write(argv[0], strlen(argv[0]));
+
+    return CMD_STATUS_OK;
+}
+
+static const struct cmd_data spps_cmds[] = {
+    { "start",      btcli_spps_start,      CMD_DESC("<scn>")},
+    { "stop",       btcli_spps_stop,       CMD_DESC("No parameters")},
+    { "disconnect", btcli_spps_disconnect, CMD_DESC("<device mac>")},
+    { "write",      btcli_spps_write,      CMD_DESC("<data>")},
+    { "help",       btcli_spps_help,       CMD_DESC(CMD_HELP_DESC)},
+};
+
+/* btcli spps help */
+static enum cmd_status btcli_spps_help(char *cmd)
+{
+	return cmd_help_exec(spps_cmds, cmd_nitems(spps_cmds), 10);
+}
+
+enum cmd_status btcli_spps(char *cmd)
+{
+    return cmd_exec(cmd, spps_cmds, cmd_nitems(spps_cmds));
+}
+```
+
+##### 初始化
+
+1. 总回调结构体是 btmg_callback_t，设置 spp server 的回调函数；
+2. 调用 btmg_core_init 初始化 bt_manager;
+3. 调用 btmg_register_callback 注册步骤 1 设置好的回调函数；
+4. 调用 btmg_set_profile(BTMG_SPP_SERVER) 使能蓝牙 Profile；
+5. 调用 btmg_adapter_enable(true) 使能蓝牙；
+6. 蓝牙使能成功后触发 state_cb，参考 btcli_adapter_status_cb；
+7. 在 state_cb 中调用 btmg_adapter_set_name，设置蓝牙名称；
+8. 在 state_cb 中调用 btmg_adapter_set_io_capability，设置 io_capability 能力；
+9. 在 state_cb 中调用 btmg_adapter_set_scanmode，设置发现模式；
+10. 在 state_cb 中调用 btmg_spps_start 指定 Channel 把 SPP Server 真正启动起来。
+
+##### 连接
+
+完成以上初始化后，手机等 SPP Client 设备可以搜索并发起连接。连接状态可以通过btmg_spps_cb.conn_state_cb 获取。
+
+如需主动断开，请使用 btmg_spps_disconnect 接口。
+
+##### 数据收发
+
+设备连接成功后，可进行数据发送和接收：
+
+1. 通过 btmg_spps_write 发送数据；
+2. 通过 btmg_spps_cb.recvdata_cb 回调接收对方数据；
+
+##### 反初始化
+
+反初始化参考 btcli_deinit，主要是以下函数：
+
+```
+btmg_adapter_enable(false);
+btmg_core_deinit();
+btmg_unregister_callback(void);
+```
+
+需要注意对于 SPP Server，需要先调用 btmg_spps_stop 再进行反初始化，否则下一次启动 SPP Server 会有异常和内存泄漏。
+
+## BLE 开发介绍
+
+BLE 根据交互行为划分为 Central 与 Peripheral 两个角色，可以理解为客户端‑服务端结构。
+
+- Central （中心设备）：作为客户端，一般需要配合 BLE 扫描，主动连上 Perpheral 设备，进行数据交互。从蓝牙 Profile 的角度称为 GATT Client。例如：手机一般会作为 Central 设备使用。
+- Peripheral（外围设备）：作为服务端，一般需要向外广播数据包，让 Central 可以扫描到。它包含一个或者多个 Service，从蓝牙 Profile 的角度称为 GATT Server。例如: 设备使用 BLE 配网作为 Peripheral 设备。
+
+### BLE 基础功能
+
+GATT Server 和 GATT Client 的开发基于 BLE 的基础 API，比如扫描、连接、广播等功能。设备建立起连接后才能通过 GATT 数据交互。本文档为了方便开发者了解在开发 GATT Server 或者 GATTClient 过程中可能会使用到哪些 BLE 基础 API，会将 BLE 基础 API 的说明附加在具体的功能 API 说明中。
+
+###  GATT Server 
+
+#### GATT Server API
+
+列出开发 GATT Server 功能所需的 API，包含 BLE 基础接口
+
+| API 接口                       | 说明                                                         |
+| ------------------------------ | ------------------------------------------------------------ |
+| btmg_gatt_attr_create          | 创建 GATT Database                                           |
+| btmg_gatt_attr_destory         | 销毁 GATT Database                                           |
+| btmg_gatt_attr_primary_service | 往 Database 中添加 service                                   |
+| btmg_gatt_attr_characteristic  | 往 Database 中添加 characteristic                            |
+| btmg_gatt_attr_ccc             | 往 Database 中添加 ccc                                       |
+| btmg_gatt_register_service     | 把构建好的 service 注册到协议栈                              |
+| btmg_gatt_unregister_service   | 注销已注册的 service                                         |
+| btmg_gatt_get_db               | 遍历本地的 Database                                          |
+| btmg_gatts_notify              | 发送 notify                                                  |
+| btmg_gatts_indicate            | 发送 indicate                                                |
+| btmg_le_set_name               | 设置本地 ble 名字                                            |
+| btmg_le_get_name               | 获取本地 ble 名字                                            |
+| btmg_le_enable_adv             | 打开或者关闭广播；打开广播之前先设置广播的参数和内容         |
+| btmg_le_set_adv_param          | 设置广播参数，如广播的间隔，广播的类型等                     |
+| btmg_le_set_adv_scan_rsp_data  | 设置广播数据内容：例如 UUID、BLE 设备名称等；设置扫描响应数据 |
+| btmg_le_whitelist_add          | 添加白名单，注意白名单保存在 controller 中；通过白名单，可以只允许特定的蓝牙设备（白名单中列出的）扫描（Scan）、连接（connect） |
+| btmg_le_white_list_remove      | 将指定设备从 controller 中的白名单中清除                     |
+| btmg_le_whitelist_clear        | 将 controller 中的白名单清空                                 |
+| btmg_le_get_connected_num      | 获取已连接设备数量                                           |
+| btmg_le_get_connected_list     | 获取已连接设备列表                                           |
+
+#### GATT Server API 调用流程
+
+GATT Server 功能的使用示例
+
+```c
+#include "cmd_util.h"
+#include "ctype.h"
+#include <bt_manager.h>
+
+static enum cmd_status btcli_ble_help(char *cmd);
+
+#define REASON_TO_STR(def)                                                                         \
+    case BTMG_BLE_##def:                                                                           \
+        return #def
+
+static inline char *btcli_le_disconect_reason_to_str(gattc_disconnect_reason_t reason)
+{
+    switch (reason) {
+        REASON_TO_STR(STATUS_CODE_SUCCESS);
+        REASON_TO_STR(AUTHENTICATION_FAILURE);
+        REASON_TO_STR(CONNECTION_TIMEOUT);
+        REASON_TO_STR(REMOTE_USER_TERMINATED);
+        REASON_TO_STR(LOCAL_HOST_TERMINATED);
+        REASON_TO_STR(LMP_RESPONSE_TIMEOUT);
+        REASON_TO_STR(FAILED_TO_BE_ESTABLISHED);
+        REASON_TO_STR(UNKNOWN_OTHER_ERROR);
+    default:
+        return "UNKNOWN_OTHER_ERROR";
+    }
+}
+
+static int btcli_addr_from_str(const char *str, btmg_addr_t *addr)
+{
+    int i, j;
+    uint8_t tmp;
+
+    if (strlen(str) != 17U) {
+        return -1;
+    }
+    for (i = 5, j = 1; *str != '\0'; str++, j++) {
+        if (!(j % 3) && (*str != ':')) {
+            return -1;
+        } else if (*str == ':') {
+            i--;
+            continue;
+        }
+        addr->val[6 - i] = addr->val[6 - i] << 4;
+        if (char2hex(*str, &tmp) < 0) {
+            return -1;
+        }
+        addr->val[6 - i] |= tmp;
+    }
+    return 0;
+}
+
+static int btcli_le_addr_from_str(const char *str, const char *type, btmg_le_addr_t *addr)
+{
+    int err;
+
+    err = btcli_addr_from_str(str, &addr->addr);
+    if (err < 0) {
+        return err;
+    }
+
+    if (!strcmp(type, "public") || !strcmp(type, "(public)")) {
+        addr->type = BTMG_LE_PUBLIC_ADDRESS;
+    } else if (!strcmp(type, "random") || !strcmp(type, "(random)")) {
+        addr->type = BTMG_LE_RANDOM_ADDRESS;
+    } else if (!strcmp(type, "public-id") || !strcmp(type, "(public-id)")) {
+        addr->type = BTMG_LE_PUBLIC_ADDRESS_ID;
+    } else if (!strcmp(type, "random-id") || !strcmp(type, "(random-id)")) {
+        addr->type = BTMG_LE_RANDOM_ADDRESS_ID;
+    } else {
+        return -1;
+    }
+
+    return 0;
+}
+
+static int btcli_le_addr_to_str(btmg_le_addr_t addr, char *str, int len)
+{
+    char type[10];
+
+    switch (addr.type) {
+    case BTMG_LE_RANDOM_ADDRESS:
+        strcpy(type, "random");
+        break;
+    case BTMG_LE_PUBLIC_ADDRESS:
+        strcpy(type, "public");
+        break;
+    case BTMG_LE_RANDOM_ADDRESS_ID:
+        strcpy(type, "random-id");
+        break;
+    case BTMG_LE_PUBLIC_ADDRESS_ID:
+        strcpy(type, "public-id");
+        break;
+    default:
+        snprintk(type, sizeof(type), "0x%02x", addr.type);
+        break;
+    }
+
+    return snprintk(str, len, "%02X:%02X:%02X:%02X:%02X:%02X (%s)", addr.addr.val[0],
+                    addr.addr.val[1], addr.addr.val[2], addr.addr.val[3], addr.addr.val[4],
+                    addr.addr.val[5], type);
+}
+
+void btcli_ble_scan_cb(le_scan_cb_para_t *data)
+{
+    char addr[30];
+
+    btcli_le_addr_to_str(data->addr, addr, sizeof(addr));
+    CMD_DBG("[DEVICE]: %s, AD evt type %u, RSSI %i %s\n", addr, data->adv_type, data->rssi, data->name);
+}
+
+void btcli_ble_connection_cb(le_connection_para_t *data)
+{
+    char addr[30];
+    btcli_le_addr_to_str(data->addr, addr, 30);
+
+    if (data->role == 0) {
+        if (data->status == LE_CONNECTED) {
+           CMD_DBG("gattc connect success,id=[%d] %s\n", data->conn_id, addr);
+        } else if (data->status == LE_CONNECT_FAIL){
+           CMD_DBG("gattc connect failed,id=[%d] %s\n", data->conn_id, addr);
+        } else if (data->status == LE_DISCONNECTED) {
+           CMD_DBG("gattc disconnected, reason= %s, id=[%d] %s\n",
+                    btcli_le_disconect_reason_to_str(data->reason), data->conn_id, addr);
+        }
+    } else {
+        if (data->status == LE_CONNECTED) {
+           CMD_DBG("gatts connected,id=[%d] %s\n", data->conn_id, addr);
+        } else if (data->status == LE_CONNECT_FAIL){
+           CMD_DBG("gatts connect failed,id=[%d] %s\n", data->conn_id, addr);
+        } else if (data->status == LE_DISCONNECTED) {
+           CMD_DBG("gatts disconnected, reason[0x%02x]= %s, id=[%d] %s\n",
+                    data->reason ,btcli_le_disconect_reason_to_str(data->reason), data->conn_id, addr);
+        }
+    }
+}
+
+enum cmd_status btcli_ble_scan(char *cmd)
+{
+    int argc;
+    char *argv[5];
+    int err;
+    int i = 0;
+
+    argc = cmd_parse_argv(cmd, argv, 5);
+    if (argc < 1) {
+        CMD_ERR("invalid param number %d\n", argc);
+        return CMD_STATUS_INVALID_ARG;
+    }
+
+    btmg_le_scan_param_t scan_param = { 0 };
+    {
+        scan_param.scan_type = LE_SCAN_TYPE_ACTIVE;
+        scan_param.scan_interval = 0x0320;
+        scan_param.scan_window = 0x0190;
+        scan_param.filter_duplicate = LE_SCAN_DUPLICATE_DISABLE;
+        scan_param.filter_policy = LE_SCAN_FILTER_POLICY_ALLOW_ALL;
+        scan_param.timeout = 0;
+    }
+
+    while (i < argc) {
+        if (!cmd_strcmp(argv[i], "on")) {
+            CMD_DBG("Use default scan parameters\n");
+        } else if (!cmd_strcmp(argv[i], "off")) {
+            err = btmg_le_scan_stop();
+            if (err) {
+                CMD_ERR("LE scan stop failed\n");
+                return err;
+            } else {
+                CMD_DBG("LE scan stopped successfully\n");
+            }
+            return CMD_STATUS_OK;
+        } else if (!cmd_strcmp(argv[i], "passive")) {
+            scan_param.scan_type = LE_SCAN_TYPE_PASSIVE;
+        } else if (!cmd_strcmp(argv[i], "dups")) {
+            scan_param.filter_duplicate = LE_SCAN_DUPLICATE_DISABLE;
+        } else if (!cmd_strcmp(argv[i], "nodups")) {
+            scan_param.filter_duplicate = LE_SCAN_DUPLICATE_ENABLE;
+        } else if (!cmd_strcmp(argv[i], "wl")) {
+            scan_param.filter_policy = LE_SCAN_FILTER_POLICY_ONLY_WLIST;
+        } else if (!cmd_strcmp(argv[i], "active")) {
+            scan_param.scan_type = LE_SCAN_TYPE_ACTIVE;
+        } else if (!cmd_strcmp(argv[i], "timeout")) {
+            scan_param.timeout = strtoul(argv[i], NULL, 16);
+        } else if (!cmd_strncmp(argv[i], "int=0x", 4)) {
+            uint32_t num;
+            int cnt = cmd_sscanf(argv[i] + 4, "%x", &num);
+            if (cnt != 1) {
+                CMD_ERR("invalid param %s\n", argv[i] + 4);
+                return CMD_STATUS_INVALID_ARG;
+            }
+            scan_param.scan_interval = num;
+            CMD_DBG("scan interval 0x%x\n", scan_param.scan_interval);
+        } else if (!cmd_strncmp(argv[i], "win=0x", 4)) {
+            uint32_t num;
+            int cnt = cmd_sscanf(argv[i] + 4, "%x", &num);
+            if (cnt != 1) {
+                CMD_ERR("invalid param %s\n", argv[i] + 4);
+                return CMD_STATUS_INVALID_ARG;
+            }
+            scan_param.scan_window = num;
+            CMD_DBG("scan window 0x%x\n", scan_param.scan_window);
+        } else {
+            CMD_ERR("invalid param %s\n", argv[i]);
+            return CMD_STATUS_INVALID_ARG;
+        }
+        i++;
+    }
+    err = btmg_le_scan_start(&scan_param);
+    if (err) {
+        CMD_ERR("LE scan start failed\n");
+        return err;
+    } else {
+        CMD_DBG("LE scan started!\n");
+    }
+
+    return CMD_STATUS_OK;
+}
+
+enum cmd_status btcli_ble_adv(char *cmd)
+{
+    int argc;
+    char *argv[5];
+    int i = 0;
+    int err;
+    int start_adv = 0;
+    btmg_adv_scan_rsp_data_t btmg_adv_data = { 0 };
+    btmg_adv_scan_rsp_data_t btmg_scan_data = { 0 };
+
+    argc = cmd_parse_argv(cmd, argv, 5);
+    if (argc < 1) {
+        CMD_ERR("invalid param number %d\n", argc);
+        return CMD_STATUS_INVALID_ARG;
+    }
+
+    while (i < argc) {
+        if (!cmd_strcmp(argv[i], "on")) {
+            start_adv = 1;
+        } else if (!cmd_strcmp(argv[i], "off")) {
+            err = btmg_le_enable_adv(0);
+            if (err) {
+                CMD_ERR("Disable Advertising failed,(err %d)\n");
+                return err;
+            } else {
+                CMD_DBG("Advertising stopped\n");
+            }
+            return 0;
+        } else if (!cmd_strncmp(argv[i], "adv=", 4)) {
+            btmg_adv_data.data_len = hex2bin(argv[i] + 4, strlen(argv[i]) - 4, btmg_adv_data.data,
+                                             sizeof(btmg_adv_data.data));
+            if (btmg_adv_data.data_len == 0) {
+                CMD_ERR("No data set\n");
+                return CMD_STATUS_INVALID_ARG;
+            }
+        } else if (!cmd_strncmp(argv[i], "scan=", 5)) {
+            btmg_scan_data.data_len = hex2bin(argv[i] + 5, strlen(argv[i]) - 5, btmg_scan_data.data,
+                                              sizeof(btmg_scan_data.data));
+            if (btmg_scan_data.data_len == 0) {
+                CMD_ERR("No data set\n");
+                return CMD_STATUS_INVALID_ARG;
+            }
+        }
+        i++;
+    }
+    btmg_le_set_adv_scan_rsp_data(&btmg_adv_data, &btmg_scan_data);
+    if (start_adv = 1) {
+        btmg_le_set_adv_param(NULL);
+        err = btmg_le_enable_adv(true);
+        CMD_DBG("Advertising started\n");
+    }
+
+    return CMD_STATUS_OK;
+}
+
+enum cmd_status btcli_ble_name(char *cmd)
+{
+    int argc;
+    char *argv[1];
+    int err;
+
+    argc = cmd_parse_argv(cmd, argv, 1);
+
+    if (argc < 1) {
+        CMD_DBG("Bluetooth Local ble Name: %s\n", btmg_le_get_name());
+        return CMD_STATUS_OK;
+    }
+
+    err = btmg_le_set_name(argv[0]);
+    if (err) {
+        CMD_DBG("Unable to set ble name %s (err %d)\n", argv[0], err);
+        return CMD_STATUS_FAIL;
+    }
+    return CMD_STATUS_OK;
+}
+
+enum cmd_status btcli_ble_connect(char *cmd)
+{
+    int argc;
+    char *argv[5];
+    int err;
+    bt_addr_le_t addr;
+
+    argc = cmd_parse_argv(cmd, argv, 5);
+    if (argc < 1) {
+        CMD_ERR("invalid param number %d\n", argc);
+        return CMD_STATUS_INVALID_ARG;
+    }
+
+    err = bt_addr_le_from_str(argv[0], argv[1], &addr);
+    if (err) {
+        CMD_ERR("Invalid peer address (err %d)\n", err);
+        return CMD_STATUS_INVALID_ARG;
+    }
+
+    btmg_le_addr_t peer;
+    peer.type = BTMG_LE_RANDOM_ADDRESS;
+
+    btmg_le_conn_param_t conn_param;
+    conn_param.min_conn_interval = 0x0010;
+    conn_param.max_conn_interval = 0x0020;
+    conn_param.slave_latency = 0x0000;
+    conn_param.conn_sup_timeout = 0x0050;
+    memcpy(peer.addr.val, addr.a.val, 6);
+
+    if (addr.type == BT_ADDR_LE_PUBLIC) {
+        peer.type = BTMG_LE_PUBLIC_ADDRESS;
+    } else if (addr.type == BT_ADDR_LE_RANDOM) {
+        peer.type = BTMG_LE_RANDOM_ADDRESS;
+    } else {
+        return CMD_STATUS_INVALID_ARG;
+    }
+
+    int i = 2;
+    while (i < argc) {
+        if (!cmd_strncmp(argv[i], "lat=", 4)) {
+            uint32_t num;
+            int cnt = cmd_sscanf(argv[i] + 4, "%x", &num);
+            if (cnt != 1) {
+                CMD_ERR("invalid param %s\n", argv[i] + 4);
+                return CMD_STATUS_INVALID_ARG;
+            }
+            conn_param.slave_latency = (uint16_t)(num);
+            CMD_DBG("conn latency 0x%x\n", conn_param.slave_latency);
+        } else if (!cmd_strncmp(argv[i], "to=", 3)) {
+            uint32_t num;
+            int cnt = cmd_sscanf(argv[i] + 3, "%x", &num);
+            if (cnt != 1) {
+                CMD_ERR("invalid param %s\n", argv[i] + 4);
+                return CMD_STATUS_INVALID_ARG;
+            }
+            conn_param.conn_sup_timeout = (uint16_t)(num);
+            CMD_DBG("conn timeout 0x%x\n", conn_param.conn_sup_timeout);
+        } else if (!cmd_strncmp(argv[i], "min=", 4)) {
+            uint32_t num;
+            int cnt = cmd_sscanf(argv[i] + 4, "%x", &num);
+            if (cnt != 1) {
+                CMD_ERR("invalid param %s\n", argv[i] + 4);
+                return CMD_STATUS_INVALID_ARG;
+            }
+            conn_param.min_conn_interval = (uint16_t)(num);
+            CMD_DBG("conn interval_min 0x%x\n", conn_param.min_conn_interval);
+        } else if (!cmd_strncmp(argv[i], "max=", 4)) {
+            uint32_t num;
+            int cnt = cmd_sscanf(argv[i] + 4, "%x", &num);
+            if (cnt != 1) {
+                CMD_ERR("invalid param %s\n", argv[i] + 4);
+                return CMD_STATUS_INVALID_ARG;
+            }
+            conn_param.max_conn_interval = (uint16_t)(num);
+            CMD_DBG("conn interval_max 0x%x\n", conn_param.max_conn_interval);
+        } else {
+            CMD_ERR("invalid param %s\n", argv[i]);
+            return CMD_STATUS_INVALID_ARG;
+        }
+        i++;
+    }
+    err = btmg_le_connect(&peer, &conn_param);
+    if (err) {
+        CMD_ERR("ble connect failed\n");
+        return -1;
+    }
+
+    return CMD_STATUS_OK;
+}
+
+enum cmd_status btcli_ble_disconnect(char *cmd)
+{
+    int argc;
+    char *argv[3];
+    int err;
+    uint8_t default_conn_id = 0;
+
+    argc = cmd_parse_argv(cmd, argv, 3);
+
+    if (default_conn_id >= 0 && argc < 3) {
+        err = btmg_le_disconnect(default_conn_id, 0);
+    } else {
+        // bt_addr_le_t addr;
+        // if (argc < 3) {
+        //     shell_help(shell);
+        //     return SHELL_CMD_HELP_PRINTED;
+        // }
+        // err = bt_addr_le_from_str(argv[1], argv[2], &addr);
+        // if (err) {
+        //     shell_error(shell, "Invalid peer address (err %d)", err);
+        //     return err;
+        // }
+        // err = btmg_le_disconnect(0, 0);
+    }
+    return CMD_STATUS_OK;
+}
+
+enum cmd_status btcli_ble_connections(char *cmd)
+{
+
+    char addr[30];
+    int dev_num = 0;
+
+    btmg_le_get_connected_num(&dev_num);
+    gattc_connected_list_para_t param[dev_num];
+    btmg_le_get_connected_list(param);
+
+    for (int i = 0; i < dev_num; i++) {
+        btcli_le_addr_to_str(param[i].addr, addr, 30);
+        CMD_DBG("DEVICE[%s],conn_id[%d]\n", addr, param[i].conn_id);
+    }
+    return CMD_STATUS_OK;
+}
+
+#if defined(CONFIG_BT_WHITELIST)
+enum cmd_status btcli_ble_wl_add(char *cmd)
+{
+    int argc;
+    char *argv[2];
+    int err;
+    btmg_le_addr_t addr;
+
+    argc = cmd_parse_argv(cmd, argv, 2);
+    if (argc < 1) {
+        CMD_ERR("invalid param number %d\n", argc);
+        return CMD_STATUS_INVALID_ARG;
+    }
+
+    err = btcli_le_addr_from_str(argv[0], argv[1], &addr);
+    if (err) {
+        CMD_ERR("Invalid peer address (err %d)\n", err);
+        return CMD_STATUS_INVALID_ARG;
+    }
+
+    err = btmg_le_whitelist_add(&addr);
+    if (err) {
+        CMD_ERR("Add to whitelist failed (err %d)\n", err);
+        return CMD_STATUS_INVALID_ARG;
+    }
+
+    return CMD_STATUS_OK;
+}
+
+enum cmd_status btcli_ble_wl_rem(char *cmd)
+{
+    int argc;
+    char *argv[2];
+    int err;
+    btmg_le_addr_t addr;
+
+    argc = cmd_parse_argv(cmd, argv, 2);
+    if (argc < 1) {
+        CMD_ERR("invalid param number %d\n", argc);
+        return CMD_STATUS_INVALID_ARG;
+    }
+
+    err = btcli_le_addr_from_str(argv[0], argv[1], &addr);
+    if (err) {
+        CMD_ERR("Invalid peer address (err %d)\n", err);
+        return CMD_STATUS_INVALID_ARG;
+    }
+
+    err = btmg_le_white_list_remove(&addr);
+    if (err) {
+        CMD_ERR("Remove from whitelist failed (err %d)\n", err);
+        return CMD_STATUS_INVALID_ARG;
+    }
+
+    return CMD_STATUS_OK;
+}
+
+enum cmd_status btcli_ble_wl_clear(char *cmd)
+{
+    int err;
+
+    err = btmg_le_whitelist_clear();
+    if (err) {
+        CMD_ERR("Clearing whitelist failed (err %d)\n", err);
+        return CMD_STATUS_FAIL;
+    }
+
+    return CMD_STATUS_OK;
+}
+
+enum cmd_status blecli_ble_wl_connect(char *cmd)
+{
+    int argc;
+    char *argv[1];
+    int err;
+    btmg_le_conn_param_t conn_param;
+
+    argc = cmd_parse_argv(cmd, argv, 1);
+    if (argc < 1) {
+        CMD_ERR("invalid param number %d\n", argc);
+        return CMD_STATUS_INVALID_ARG;
+    }
+
+    conn_param.min_conn_interval = 0x0018;
+    conn_param.max_conn_interval = 0x0028;
+    conn_param.slave_latency = 0;
+    conn_param.conn_sup_timeout = 400;
+
+    if (!strcmp(argv[0], "on")) {
+        err = btmg_le_connect_auto_start(&conn_param);
+        if (err) {
+            CMD_ERR("Auto connect failed (err %d)\n", err);
+            return CMD_STATUS_OK;
+        }
+    } else if (!strcmp(argv[0], "off")) {
+        err = btmg_le_connect_auto_stop();
+        if (err) {
+            CMD_ERR("Auto connect stop failed (err %d)\n", err);
+            return CMD_STATUS_OK;
+        }
+    }
+
+    return CMD_STATUS_OK;
+}
+#else //!defined(CONFIG_BT_WHITELIST)
+enum cmd_status btcli_ble_auto_conn(char *cmd)
+{
+    int argc;
+    char *argv[3];
+    int err;
+    btmg_le_addr_t addr;
+    btmg_le_conn_param_t conn_param;
+
+    argc = cmd_parse_argv(cmd, argv, 3);
+    if (argc < 1) {
+        CMD_ERR("invalid param number %d\n", argc);
+        return CMD_STATUS_INVALID_ARG;
+    }
+
+    conn_param.min_conn_interval = 0x0018;
+    conn_param.max_conn_interval = 0x0028;
+    conn_param.slave_latency = 0;
+    conn_param.conn_sup_timeout = 400;
+
+    err = btmg_addr_le_from_str(argv[0], argv[1], &addr);
+    if (err) {
+        CMD_ERR("Invalid peer address (err %d)\n", err);
+        return CMD_STATUS_INVALID_ARG;
+    }
+
+    if (argc < 4) {
+        return btmg_le_set_auto_connect(&addr, &conn_param);
+    } else if (!strcmp(argv[2], "on")) {
+        return btmg_le_set_auto_connect(&addr, &conn_param);
+    } else if (!strcmp(argv[2], "off")) {
+        return btmg_le_set_auto_connect(&addr, NULL);
+    }
+}
+#endif
+
+#if defined(CONFIG_BT_SMP) || defined(CONFIG_BT_BREDR)
+enum cmd_status btcli_ble_get_sec(char *cmd)
+{
+    int argc;
+    char *argv[1];
+    int conn_id = 0;
+
+    argc = cmd_parse_argv(cmd, argv, 1);
+    if (argc < 1) {
+        CMD_ERR("invalid param number %d\n", argc);
+        return CMD_STATUS_INVALID_ARG;
+    }
+
+    conn_id = strtoul(argv[0], NULL, 16);
+
+    int sec = btmg_le_get_security(conn_id);
+    CMD_ERR("conn_id=%d, security=%d\n", conn_id, sec);
+
+    return CMD_STATUS_OK;
+}
+
+enum cmd_status btcli_ble_set_sec(char *cmd)
+{
+    int argc;
+    char *argv[2];
+    int sec, ret, conn_id = 0;
+
+    argc = cmd_parse_argv(cmd, argv, 2);
+    if (argc < 1) {
+        CMD_ERR("invalid param number %d\n", argc);
+        return CMD_STATUS_INVALID_ARG;
+    }
+
+    sec = strtoul(argv[0], NULL, 16);
+    if (argc == 2) {
+        conn_id = strtoul(argv[1], NULL, 16);
+    }
+    ret = btmg_le_set_security(conn_id, sec);
+    if (ret) {
+        CMD_ERR("conn_id=%d, security=%d failed\n", conn_id, sec);
+        return CMD_STATUS_OK;
+    }
+    CMD_ERR("conn_id=%d, security=%d success\n", conn_id, sec);
+
+    return CMD_STATUS_OK;
+}
+#endif
+
+static const struct cmd_data ble_cmds[] = {
+    { "scan",           btcli_ble_scan,          CMD_DESC("<on/off/passive> [int=0x0100] [win=0x0100] [silent]")},
+    { "adv",            btcli_ble_adv,           CMD_DESC("<on/off> [adv=020106] [scan=]")},
+    { "name",           btcli_ble_name,          CMD_DESC("[name]")},
+    { "connect",        btcli_ble_connect,       CMD_DESC("<address: XX:XX:XX:XX:XX:XX> <type: (public|random)> [min=] [max=] [to=]")},
+    { "disconnect",     btcli_ble_disconnect,    CMD_DESC("[none]")},
+    { "connections",    btcli_ble_connections,   CMD_DESC("[none]")},
+#if defined(CONFIG_BT_WHITELIST)
+    { "wl_add",         btcli_ble_wl_add,        CMD_DESC("<address: XX:XX:XX:XX:XX:XX> <type: (public|random)>")},
+    { "wl_rem",         btcli_ble_wl_rem,        CMD_DESC("<address: XX:XX:XX:XX:XX:XX> <type: (public|random)>")},
+    { "wl_clear",       btcli_ble_wl_clear,      CMD_DESC("[none]")},
+    { "wl_connect",     btcli_ble_connect,       CMD_DESC("<on, off>")},
+#else
+    { "auto_conn",      btcli_ble_auto_conn,     CMD_DESC("<address: XX:XX:XX:XX:XX:XX> <type: (public|random)> [value:on,off]")},
+#endif
+#if defined(CONFIG_BT_SMP) || defined(CONFIG_BT_BREDR)
+    { "get_sec",        btcli_ble_get_sec,       CMD_DESC("[conn_id]")},
+    { "set_sec",        btcli_ble_set_sec,       CMD_DESC("<security level: >=1 > [conn_id]")},
+#endif
+    { "help",           btcli_ble_help,          CMD_DESC(CMD_HELP_DESC)},
+};
+
+/* btcli ble help */
+static enum cmd_status btcli_ble_help(char *cmd)
+{
+	return cmd_help_exec(ble_cmds, cmd_nitems(ble_cmds), 10);
+}
+
+enum cmd_status btcli_ble(char *cmd)
+{
+    return cmd_exec(cmd, ble_cmds, cmd_nitems(ble_cmds));
+}
+
+#include "cmd_util.h"
+#include "ctype.h"
+#include <bt_manager.h>
+
+static enum cmd_status btcli_gatt_help(char *cmd);
+
+static void btcli_print_chrc_props(uint8_t properties)
+{
+    printf("Properties: ");
+    if (properties & BT_GATT_CHRC_BROADCAST) {
+        printf("[bcast] ");
+    }
+    if (properties & BT_GATT_CHRC_READ) {
+        printf("[read] ");
+    }
+    if (properties & BT_GATT_CHRC_WRITE) {
+        printf("[write] ");
+    }
+    if (properties & BT_GATT_CHRC_WRITE_WITHOUT_RESP) {
+        printf("[write without rsp] ");
+    }
+    if (properties & BT_GATT_CHRC_NOTIFY) {
+        printf("[notify] ");
+    }
+    if (properties & BT_GATT_CHRC_INDICATE) {
+        printf("[indicate] ");
+    }
+    if (properties & BT_GATT_CHRC_AUTH) {
+        printf("[auth] ");
+    }
+    if (properties & BT_GATT_CHRC_EXT_PROP) {
+        printf("[ext prop] ");
+    }
+    printf("\n");
+}
+
+static void btcli_uuid_to_str(btmg_uuid_t *uuid, char *str, size_t len)
+{
+    uint32_t tmp1, tmp5;
+    uint16_t tmp0, tmp2, tmp3, tmp4;
+
+    switch (uuid->type) {
+    case BTMG_UUID_16:
+        snprintk(str, len, "%04x", uuid->value.u16);
+        break;
+    case BTMG_UUID_32:
+        snprintk(str, len, "%08x", uuid->value.u32);
+        break;
+    case BTMG_UUID_128:
+        memcpy(&tmp0, &uuid->value.u128[0], sizeof(tmp0));
+        memcpy(&tmp1, &uuid->value.u128[2], sizeof(tmp1));
+        memcpy(&tmp2, &uuid->value.u128[6], sizeof(tmp2));
+        memcpy(&tmp3, &uuid->value.u128[8], sizeof(tmp3));
+        memcpy(&tmp4, &uuid->value.u128[10], sizeof(tmp4));
+        memcpy(&tmp5, &uuid->value.u128[12], sizeof(tmp5));
+
+        snprintk(str, len, "%08x-%04x-%04x-%04x-%08x%04x", tmp5, tmp4, tmp3, tmp2, tmp1, tmp0);
+        break;
+    default:
+        memset(str, 0, len);
+        return;
+    }
+}
+
+void btcli_gattc_dis_att_cb(gattc_dis_cb_para_t *data)
+{
+    char uuid_str1[37];
+    char uuid_str2[37];
+
+    switch (data->type) {
+    case BTMG_DIS_PRIMARY_SERVER:
+    case BTMG_DIS_SECONDARY_SERVER:
+    case BTMG_DIS_INCLUDE_SERVER:
+        btcli_uuid_to_str(&(data->uuid), uuid_str1, sizeof(uuid_str1));
+        btcli_uuid_to_str(&(data->server_uuid), uuid_str2, sizeof(uuid_str2));
+        printf("start_handle [0x%04x]------------end_handle [0x%04x]\n",
+                                    data->start_handle, data->end_handle);
+        printf("-------|--------------------------------------------\n");
+        printf("0x%04x | Service declaration[%s] | %s\n", data->start_handle, uuid_str1,
+            data->type == BTMG_DIS_PRIMARY_SERVER ? "PRIMARY_SERVER" : "SECONDARY_SERVER");
+        printf("0x%04x | Service uuid[%s]        | %s\n", data->start_handle+1, uuid_str2,
+                !strcmp(uuid_str2, "1800") ?"Generic Access" :
+                (!strcmp(uuid_str2, "1801")? "Generic Attribute": "Unknow Service"));
+        printf("----------------------------------------------------\n");
+        break;
+    case BTMG_DIS_CHARACTERISTIC:
+        btcli_uuid_to_str(&(data->uuid), uuid_str1, sizeof(uuid_str1));
+        btcli_uuid_to_str(&(data->char_uuid), uuid_str2, sizeof(uuid_str2));
+        printf("-------|--------------------------------------------\n");
+        printf("0x%04x | Characteristic declaration[%s]\n", data->char_handle, uuid_str1);
+        printf("0x%04x | Characteristic [%s]\n", data->value_handle, uuid_str2);
+        if (data->properties & BT_GATT_CHRC_NOTIFY | data->properties & BT_GATT_CHRC_INDICATE) {
+            printf("0x%04x | CCCD[2902]\n", data->value_handle+1);
+        }
+        btcli_print_chrc_props(data->properties);
+        break;
+    case BTMG_DIS_ATTRIBUTE:
+        btcli_uuid_to_str(&(data->uuid), uuid_str1, sizeof(uuid_str1));
+        printf("-------|--------------------------------------------\n");
+        printf("0x%04x | Attribute uuid [%s]\n", data->attr_handle, uuid_str1);
+        break;
+    default:
+        break;
+    }
+}
+
+void btcli_gattc_notify_indicate_cb(gattc_notify_indicate_cb_para_t *data)
+{
+    char recv_data[data->length + 1];
+    memcpy(recv_data, data->value, data->length);
+    recv_data[data->length] = '\0';
+
+    CMD_DBG("subscribe recv [handle=0x%04X][len=%d][data:%s]\n", data->value_handle,
+              data->length, recv_data);
+}
+
+void btcli_gattc_read_cb(gattc_read_cb_para_t *data)
+{
+    int i;
+
+    if (!data->success) {
+        CMD_DBG("gattc read failed:(0x%02x),handle[0x%04x]\n", data->att_ecode, data->handle);
+        return;
+    }
+
+    printf("\ngattc read handle[0x%04x],", data->handle);
+
+    if (data->length == 0) {
+        CMD_DBG(": 0 bytes\n");
+        return;
+    }
+
+    printf(" [len=%d],value: ", data->length);
+
+    for (i = 0; i < data->length; i++)
+        printf("%02x ", data->value[i]);
+
+    printf("\n");
+}
+
+void btcli_gattc_write_cb(gattc_write_cb_para_t *data)
+{
+    if (data->success) {
+        CMD_DBG("gattc write OK,handle[0x%04x]\n", data->handle);
+    } else {
+        CMD_DBG("gattc write failed:(0x%02x), handle[0x%04x]\n", data->att_ecode, data->handle);
+    }
+}
+
+void btcli_gatts_get_db_cb(gatts_get_db_t *data)
+{
+    char str[37];
+    char str2[37];
+
+    btcli_uuid_to_str(&(data->uuid), str, sizeof(str));
+    btcli_uuid_to_str(&(data->uuid_value), str2, sizeof(str2));
+    printf("[handle=0x%04X],[uuid=%s][uuid2=%s][perm=%d]\n", data->attr_handle, str, str2,
+              data->perm);
+}
+
+void btcli_gatts_char_read_req_cb(gatts_char_read_req_t *data)
+{
+    char readdata[] = "read request received";
+
+    memcpy(data->out_data, readdata, sizeof(readdata));
+    data->out_len = sizeof(readdata);
+    CMD_DBG("receive char read: [conn_id=%d][handle=0x%04X],[data:%s]\n", data->conn_id, data->attr_handle, readdata);
+}
+
+void btcli_gatts_char_write_req_cb(gatts_char_write_req_t *data)
+{
+    char recv_data[data->value_len + 1];
+    memcpy(recv_data, data->value, data->value_len);
+    recv_data[data->value_len] = '\0';
+
+    CMD_DBG("receive char write: [conn_id=%d][handle=0x%04X][len=%d][value=%s]\n", data->conn_id,
+              data->attr_handle, data->value_len,  recv_data);
+}
+
+void btcli_gatts_ccc_cfg_cb(gatts_ccc_cfg_t *data)
+{
+    if (data->value == 0) {
+        CMD_DBG("Notifications and indications disabled, characteristics handle:%#x\n", data->attr_handle);
+    } else if (data->value == 1) {
+        CMD_DBG("Notifications enabled, characteristics handle:%#x\n", data->attr_handle);
+    } else if (data->value == 2) {
+        CMD_DBG("Indications enabled, characteristics handle:%#x\n", data->attr_handle);
+    }
+}
+
+enum cmd_status btcli_gattc_discover(char *cmd)
+{
+    int argc;
+    char *argv[2];
+    uint8_t conn_id = 0;
+    btmg_uuid_t *uuid = NULL;
+    int dis_tpye = 0;
+    uint16_t start_handle = 0x0001;
+    uint16_t end_handle = 0xFFFF;
+
+    argc = cmd_parse_argv(cmd, argv, 2);
+    if (argc < 1) {
+        CMD_ERR("invalid param number %d\n", argc);
+        return CMD_STATUS_INVALID_ARG;
+    }
+
+    if (!cmd_strcmp(argv[0], "service")) {
+            dis_tpye = 1;
+    } else if (!cmd_strcmp(argv[0], "char")) {
+            dis_tpye = 2;
+    } else if (!cmd_strcmp(argv[0], "desc")) {
+            dis_tpye = 3;
+    }
+
+    if (argc == 2) {
+        conn_id = strtoul(argv[1], NULL, 16);
+    }
+
+    if (dis_tpye == 0) {
+        btmg_gattc_discover_all_services(conn_id, uuid, start_handle, end_handle);
+    } else if (dis_tpye == 1) {
+        btmg_gattc_discover_primary_services(conn_id, uuid, start_handle, end_handle);
+    } else if (dis_tpye == 2) {
+        btmg_gattc_discover_characteristic(conn_id);
+    } else if (dis_tpye == 3) {
+        btmg_gattc_discover_descriptor(conn_id);
+    }
+
+    return CMD_STATUS_OK;
+}
+
+enum cmd_status btcli_gattc_write(char *cmd)
+{
+    int argc;
+    char *argv[4];
+    int err;
+    uint16_t handle, conn_id = 0;
+    size_t len = 0;
+    uint8_t gatt_write_buf[512] = { 0 };
+
+    argc = cmd_parse_argv(cmd, argv, 4);
+    if (argc < 1) {
+        CMD_ERR("invalid param number %d\n", argc);
+        return CMD_STATUS_INVALID_ARG;
+    }
+
+    handle = strtoul(argv[0], NULL, 16);
+
+    if (argc > 2 && !cmd_strcmp(argv[2], "string")) {
+        len = MIN(strlen(argv[1]), sizeof(gatt_write_buf));
+        strncpy((char *)gatt_write_buf, argv[1], len);
+    } else {
+        len = hex2bin(argv[1], strlen(argv[1]), gatt_write_buf, sizeof(gatt_write_buf));
+        if (len == 0) {
+            CMD_ERR("No data set \n");
+           return CMD_STATUS_INVALID_ARG;
+        }
+    }
+
+    if (argc == 4) {
+        conn_id = strtoul(argv[3], NULL, 16);
+    }
+
+    err = btmg_gattc_write(conn_id, handle, gatt_write_buf, len);
+
+    if (err) {
+        CMD_ERR("Write failed (err %d)\n", err);
+    }
+
+    return CMD_STATUS_OK;
+}
+
+enum cmd_status btcli_gattc_read(char *cmd)
+{
+    int argc;
+    char *argv[2];
+    int err;
+    uint16_t handle, conn_id = 0;
+
+    argc = cmd_parse_argv(cmd, argv, 2);
+    if (argc < 1) {
+        CMD_ERR("invalid param number %d\n", argc);
+        return CMD_STATUS_INVALID_ARG;
+    }
+
+    handle = strtoul(argv[0], NULL, 16);
+
+    if (argc == 2) {
+        conn_id = strtoul(argv[1], NULL, 16);
+    }
+
+    err = btmg_gattc_read(conn_id, handle);
+
+    if (err) {
+        CMD_ERR("Read failed (err %d)\n", err);
+    }
+
+    return CMD_STATUS_OK;
+}
+
+enum cmd_status btcli_gattc_subscribe(char *cmd)
+{
+    int argc;
+    char *argv[2];
+    int err;
+    uint16_t handle, conn_id = 0;
+    bool is_indicate = false;
+
+    argc = cmd_parse_argv(cmd, argv, 2);
+    if (argc < 1) {
+        CMD_ERR("invalid param number %d\n", argc);
+        return CMD_STATUS_INVALID_ARG;
+    }
+
+    handle = strtoul(argv[0], NULL, 16);
+    if (argc > 1) {
+        conn_id = strtoul(argv[1], NULL, 16);
+    }
+
+    btmg_gattc_subscribe(conn_id, handle);
+
+    return CMD_STATUS_OK;
+}
+
+enum cmd_status btcli_gattc_unsubscribe(char *cmd)
+{
+    int argc;
+    char *argv[2];
+    int err;
+    uint16_t handle, conn_id = 0;
+
+    argc = cmd_parse_argv(cmd, argv, 2);
+    if (argc < 1) {
+        CMD_ERR("invalid param number %d\n", argc);
+        return CMD_STATUS_INVALID_ARG;
+    }
+
+    handle = strtoul(argv[0], NULL, 16);
+    if (argc > 1) {
+        conn_id = strtoul(argv[1], NULL, 16);
+    }
+
+    err = btmg_gattc_unsubscribe(conn_id, handle);
+
+    return CMD_STATUS_OK;
+}
+
+enum cmd_status btcli_gatts_show_db(char *cmd)
+{
+    btmg_gatt_get_db();
+
+    return CMD_STATUS_OK;
+}
+
+enum cmd_status btcli_gatts_notify(char *cmd)
+{
+    int argc;
+    char *argv[4];
+    int err;
+    uint16_t handle, offset, conn_id = 0;
+    size_t len = 0;
+    uint8_t gatt_write_buf[1024] = { 0 };
+
+    argc = cmd_parse_argv(cmd, argv, 4);
+    if (argc < 1) {
+        CMD_ERR("invalid param number %d\n", argc);
+        return CMD_STATUS_INVALID_ARG;
+    }
+
+    handle = strtoul(argv[0], NULL, 16);
+
+    if (argc >= 4 && !cmd_strcmp(argv[2], "string")) {
+        len = MIN(strlen(argv[1]), sizeof(gatt_write_buf));
+        strncpy((char *)gatt_write_buf, argv[1], len);
+        if (argc == 4) {
+            conn_id = strtoul(argv[3], NULL, 16);
+        }
+    } else {
+        len = hex2bin(argv[1], strlen(argv[1]), gatt_write_buf, sizeof(gatt_write_buf));
+        if (len == 0) {
+            CMD_ERR("No data set\n");
+            return CMD_STATUS_INVALID_ARG;
+        }
+        if (argc == 3) {
+            conn_id = strtoul(argv[2], NULL, 16);
+        }
+    }
+    btmg_gatts_notify(conn_id, handle, gatt_write_buf, len);
+
+    return CMD_STATUS_OK;
+}
+
+enum cmd_status btcli_gatts_indicate(char *cmd)
+{
+    int argc;
+    char *argv[4];
+    int err;
+    uint16_t handle, offset, conn_id = 0;
+    size_t len = 0;
+    uint8_t gatt_write_buf[1024] = { 0 };
+
+    argc = cmd_parse_argv(cmd, argv, 4);
+    if (argc < 1) {
+        CMD_ERR("invalid param number %d\n", argc);
+        return CMD_STATUS_INVALID_ARG;
+    }
+
+    handle = strtoul(argv[0], NULL, 16);
+
+    if (argc >= 4 && !cmd_strcmp(argv[2], "string")) {
+        len = MIN(strlen(argv[1]), sizeof(gatt_write_buf));
+        strncpy((char *)gatt_write_buf, argv[1], len);
+        conn_id = strtoul(argv[3], NULL, 16);
+    } else {
+        len = hex2bin(argv[1], strlen(argv[1]), gatt_write_buf, sizeof(gatt_write_buf));
+        if (len == 0) {
+            CMD_ERR("No data set\n");
+            return CMD_STATUS_INVALID_ARG;
+        }
+        if (argc == 3) {
+            conn_id = strtoul(argv[2], NULL, 16);
+        }
+    }
+
+    btmg_gatts_notify(conn_id, handle, gatt_write_buf, len);
+
+    return CMD_STATUS_OK;
+}
+
+enum cmd_status btcli_gatt_exchange_mtu(char *cmd)
+{
+    int argc;
+    char *argv[1];
+    int conn_id = 0;
+
+    argc = cmd_parse_argv(cmd, argv, 1);
+    if (argc == 1) {
+        conn_id = atoi(argv[0]);
+    }
+
+    btmg_le_gatt_mtu_exchange(conn_id);
+    CMD_DBG("conn %d mtu_exchange \n", conn_id);
+
+    return CMD_STATUS_OK;
+}
+
+enum cmd_status btcli_gatt_get_mtu(char *cmd)
+{
+    int argc;
+    char *argv[1];
+    int mtu = 0;
+    int conn_id = 0;
+
+    argc = cmd_parse_argv(cmd, argv, 1);
+
+    if (argc == 1) {
+        conn_id = atoi(argv[0]);
+    }
+
+    mtu = btmg_le_conn_get_mtu(conn_id);
+    CMD_DBG("Get conn:%d,MTU=%d\n", conn_id, mtu);
+
+    return CMD_STATUS_OK;
+}
+
+static const struct cmd_data gatt_cmds[] = {
+    { "discover",       btcli_gattc_discover,     CMD_DESC("[type: service, char, desc] [conn_id]")},
+    { "write",          btcli_gattc_write,        CMD_DESC("<handle> <data> [string] [conn_id]")},
+    { "read",           btcli_gattc_read,         CMD_DESC("<handle> [conn_id]")},
+    { "subscribe",      btcli_gattc_subscribe,    CMD_DESC("<char_handle> [conn_id]")},
+    { "unsubscribe",    btcli_gattc_unsubscribe,  CMD_DESC("<char_handle> [conn_id]")},
+    { "show",           btcli_gatts_show_db,      CMD_DESC("[none]")},
+    { "notify",         btcli_gatts_notify,       CMD_DESC("<handle> <data> [string] [conn_id]")},
+    { "indicate",       btcli_gatts_indicate,     CMD_DESC("<handle> <data> [string] [conn_id]")},
+    { "exchange_mtu",   btcli_gatt_exchange_mtu,  CMD_DESC("[conn_id]")},
+    { "get_mtu",        btcli_gatt_get_mtu,       CMD_DESC("[conn_id]")},
+    { "help",           btcli_gatt_help,          CMD_DESC(CMD_HELP_DESC)},
+};
+
+/* btcli gatt help */
+static enum cmd_status btcli_gatt_help(char *cmd)
+{
+	return cmd_help_exec(gatt_cmds, cmd_nitems(gatt_cmds), 10);
+}
+
+enum cmd_status btcli_gatt(char *cmd)
+{
+    return cmd_exec(cmd, gatt_cmds, cmd_nitems(gatt_cmds));
+}
+```
+
+##### 初始化
+
+1. 总回调结构体是 btmg_callback_t，先设 gatt server 的回调函数；
+2. 调用 btmg_core_init 初始化 btmanager;
+3. 调用 btmg_register_callback 注册步骤 1 设置好的回调函数；
+4. 调用 btmg_set_profile(BTMG_GATT_SERVER) 使能蓝牙 Profile；
+5. 调用 btmg_adapter_enable(true) 使能蓝牙；
+6. 蓝牙使能成功后触发 state_cb，可以获取蓝牙的开关状态；
+
+##### 注册 service
+
+正常打开蓝牙后，紧接着注册 service，可以参考 ble_gatt_register_service 的写法，大致步骤如下：
+
+1. 通过 btmg_gatt_attr_create(int num_attr) 创建本地数据库，参数指支持的 attribute 最大数量；
+
+2. 调用 btmg_gatt_attr_primary_service 创建一个 service；
+3. 接着调用 btmg_gatt_attr_characteristic 添加 characteristic 到步骤 2 的 service 中；
+4. 如 果 characteristic 需 要 添 加 Client Characteristic Configuration Descriptor， 就 在btmg_gatt_attr_characteristic 后面调用 btmg_gatt_attr_ccc；
+
+5. 如果需要增加新的 service，调用需要再次 btmg_gatt_attr_primary_service，即btmg_gatt_attr_primary_service 函数是不同 service 的交界；
+
+6. 在设置完所有需要添加的服务后，最后通过 btmg_gatt_register_service 注册到协议栈中；例如以下的写法，包含两个 service：
+
+```c
+db = btmg_gatt_attr_primary_service //service1 start
+btmg_gatt_attr_characteristic
+btmg_gatt_attr_ccc
+btmg_gatt_attr_characteristic //service1 end
+btmg_gatt_attr_primary_service //service2 start
+btmg_gatt_attr_characteristic //service2 end
+btmg_gatt_register_service(db)
+```
+
+##### 广播
+
+打开广播可以参考 btcli.c 的 ble_advertise_on：
+
+1. 调用 btmg_le_set_adv_param 配置广播参数，扫描参数请根据实际情况设置；
+2. 调用 btmg_le_set_adv_scan_rsp_data 设置广播数据或扫描相应数据；
+3. 调用 btmg_le_enable_adv(true) 开启广播；
+4. 如需关闭广播调用 btmg_le_enable_adv(false);
+
+##### 连接
+
+GATT Server 设备在开启 BLE 广播后，可以被 GATT Client 设备扫描连接。连接状态通过 btmg_gatts_cb.conn_cb 上报。
+
+可以参考 btcli_ble_connection_cb。
+
+##### 数据交互
+
+1. 收到对端设备的读请求，会触发 btmg_gatts_cb.char_read_req_cb 回调；
+2. 收到对端设备的写请求，会触发 btmg_gatts_cb.char_write_req_cb 回调；
+3. 收到对端设备对 ccc 的配置，会触发 btmg_gatts_cb.ccc_cfg_cb 回调；（1）对方配置使能 Indication 后，可以调用 btmg_gatts_indicate 发送指示；（2）对方配置使能 Notification 后，可以调用 btmg_gatts_notify 发送通知；
+
+##### 反初始化
+
+反初始化时，需要把已经注册的 service 注销、关闭广播、销毁前面创建的 Database：
+
+```c
+btmg_gatt_unregister_service
+btmg_le_enable_adv(false);
+btmg_gatt_attr_destory;
+btmg_adapter_enable(false);
+btmg_core_deinit();
+btmg_unregister_callback(void);
+```
+
+### GATT Client
+
+####  GATT Client API
+
+列出开发 GATT Client 功能所需的 API，包含 BLE 基础接口
+
+| API 接口                               | 说明                                                         |
+| -------------------------------------- | ------------------------------------------------------------ |
+| btmg_gattc_discover_all_services       | 从指定 handle 范围中发现所有 service 或指定UUID 服务；发现的结果通过btmg_gattc_cb.dis_att_cb 返回 |
+| btmg_gattc_discover_primary_services   | 从指定 handle 范围中发现所有 primary service或指定 UUID 服务；发现的结果通过btmg_gattc_cb.dis_att_cb 返回 |
+| btmg_gattc_discover_characteristic     | 发现所有 characteristic；发现的结果通过btmg_gattc_cb.dis_att_cb 返回 |
+| btmg_gattc_discover_descriptor         | 发现所有 descriptor；发现的结果通过btmg_gattc_cb.dis_att_cb 返回 |
+| btmg_gattc_read                        | 读取 GATT Server 的 Characteristic Value；读取结果通过 btmg_gattc_cb.read_cb 获取 |
+| btmg_gattc_read_long                   | 如果 GATT Server 的 Characteristic Value 长度太长，可以通过此方法读取；读取结果通过btmg_gattc_cb.read_cb 获取 |
+| btmg_gattc_write                       | 写数据到 GATT Server 的 Characteristic Value，Server 需要 response，response 通过btmg_gattc_cb.write_cb 上报 |
+| btmg_gattc_write_long                  | 如果写入的数据太长，可以通过此函数，Server 也需要 response，response 通过 btmg_gattc_cb.write_cb 上报 |
+| btmg_gattc_write_without_response      | 写数据到 GATT Server 的 Characteristic Value，Server 不需要 response |
+| btmg_gattc_write_long_without_response | 如果写入的数据太长，可以通过此函数，Server 不需要 response   |
+| btmg_gattc_subscribe                   | 注册 notify 或 indicate，协议栈底层已经包含写 CCC 的操作，注册完成后，Server 端才可以对 Client 通知或者指示 |
+| btmg_gattc_unsubscribe                 | 注销 notify 或 indicate                                      |
+| btmg_le_scan_start                     | 开始 BLE 扫描，扫描结果通过btmg_gattc_cb.le_scan_cb 上报     |
+| btmg_le_scan_stop                      | 停止 BLE 扫描                                                |
+| btmg_le_set_chan_map                   | 设置 channel map                                             |
+| btmg_le_get_connected_num              | 获取已连接设备数量                                           |
+| btmg_le_get_connected_list             | 获取已连接设备列表                                           |
+| btmg_le_conn_param_update              | 更新 BLE 连接参数                                            |
+| btmg_le_connect                        | 指定设备发起 BLE 连接                                        |
+| btmg_le_disconnect                     | 断开 BLE 设备连接                                            |
+| btmg_le_unpair                         | 取消 BLE 配对                                                |
+| btmg_le_connect_auto_start             | 自动连接白名单中的对端 BLE 设备                              |
+| btmg_le_connect_auto_stop              | 停止自动连接                                                 |
+| btmg_le_set_auto_connect               | 自动连接到指定的对端 BLE 设备，启用此功能后，每次 BLE 设备断开与对端设备的连接时，若收到对端 BLE 设备的广播包，则将重新建立连接。在主动扫描期间需要禁止此功能 |
+| btmg_le_get_security                   | 获取当前连接链路的安全等级                                   |
+| btmg_le_set_security                   | 设置连接链路的安全等级                                       |
+| btmg_le_smp_passkey_entry              | 输入 passkey 对配对绑定进行回复                              |
+| btmg_le_smp_cancel                     | 取消正在进行的配对绑定流程                                   |
+| btmg_le_smp_passkey_confirm            | 如果确认了 passkey 与用户匹配，则使用此函数进行回复          |
+| btmg_le_smp_pairing_confirm            | 如果用户对配对绑定进行确认，则用此函数进行回复               |
+| btmg_le_gatt_mtu_exchange              | 交换 MTU                                                     |
+| btmg_le_conn_get_mtu                   | 获取当前连接协商后使用的 MTU 大小                            |
+
+#### GATT Client API 调用流程
+
+GATT Client 功能的使用示例
+
+##### 初始化
+
+1. 总回调结构体是 btmg_callback_t，先设 gatt client 的回调函数；
+2. 调用 btmg_core_init 初始化 bt_manager;
+3. 调用 btmg_register_callback 注册步骤 1 设置好的回调函数；
+4. 调用 btmg_set_profile(BTMG_GATT_CLIENT) 使能蓝牙 Profile；
+5. 调用 btmg_adapter_enable(true) 使能蓝牙；
+6. 蓝牙使能成功后触发 state_cb，可以获取蓝牙的开关状态；
+7. 可以根据需求使用 btmg_le_conn_param_update 更新连接参数；
+
+##### 扫描连接
+
+正常打开蓝牙后，可以扫描连接
+
+1. 调用 btmg_le_scan_start 开始扫描；
+2. 扫描到设备后，调用 btmg_le_scan_stop 停止扫描；
+3. 获取到对方 mac 地址后，调用 btmg_le_connect 发起连接；
+4. 支持连接多个设备，可以通过 btmg_le_get_connected_num和 btmg_le_get_connected_list 获取设备列表；
+
+##### 数据通信
+
+1. 可以使用 btmg_gattc_discover_primary_services 或者 btmg_gattc_discover_characteristic等接口获取 Server 端有哪些可以读写的 Characteristic Value；
+
+2. 通过 btmg_gattc_read 或者 btmg_gattc_read_long 接口指定 Characteristic Value handle 读取 Characteristic Value；
+
+3. 通过 btmg_gattc_write 或者 btmg_gattc_write_long 接口指定 Characteristic Value handle 写入 Characteristic Value；
+
+4. 通过 btmg_gattc_subscribe 注册 notify 或 indicate，当收到 Server 的 notify 或 indicate，会通过 btmg_gattc_cb.notify_indicate_cb 上报；
+
+## btcli 使用指南
+
+### 命令简介
+
+目前 RTOS 平台上 btmanager 的测试 demo 称为 btcli，支持 a2dp 、hfp、spp、gatt 等功能的测试验证。通过 btcli 或 btcli help 可以查看命令列表：
+
+```c
+c906>btcli
+[*] init : Initialize bt adater
+[*] deinit : DeInitialize bt adater
+[*] scan_mode : <0~2>:0‑NONE,1‑page scan,2‑inquiry scan&page scan
+[*] scan : <on/off>: device discovery
+[*] scan_list : list available devices
+[*] io_cap : <0~3>:0‑displayonly,1‑displayyesno,2‑keyboardonly,3‑noinputnooutput
+[*] get_dev_name : get remote device name
+[*] get_name : get bt adapter name
+[*] set_name : <name>:set bt adapter name
+[*] get_mac : get bt adapter address
+[*] pincode : <0000~9999>:enter pincode
+[*] passkey : <000000~999999>:enter passkey
+[*] passkey_confirm : confirm passkey
+[*] pairing_confirm : confirm pairing
+[*] paired_list : list paired devices
+[*] unpair_dev : unpair bond devices
+[*] a2dp_src : support paly songs and other functions,use a2dp_src help view
+[*] a2dp_snk : support receive audio, use a2dp_snk help view
+[*] avrc : support audio playback control and other functions, use avrc help view
+[*] hfp : support answering, hanging up, rejecting, voice dialing and other functions, use hfp help view
+[*] spps : support data transmission, use spps help view
+[*] sppc : support data transmission, use sppc help view
+[*] ble : support ble, use ble help view
+[*] gatt : support gatt, use gatt help view
+[*] help : print this message and quit
+For detail please use xxx help
+```
+
+a2dp_src、a2dp_snk、avrc、hfp、spps、sppc、ble、gatt还有二级命令，可以通过以下命令查看：
+
+```
+btcli a2dp_src help
+btcli a2dp_snk help
+btcli avrc help
+btcli hfp help
+btcli spps help
+btcli sppc help
+btcli ble help
+btcli gatt help
+```
+
+例如：btcli a2dp_src help
+
+```
+c906>btcli a2dp_src help
+$ a2dp_src help
+[*] connect : <device mac>
+[*] disconnect : <device mac>
+[*] start : <‑p [folder path] or ‑f [file path]>
+[*] control : <cmd>(pause play forward backward)
+[*] stop : No parameters
+[*] vol : <val>(val:0~100)
+[*] help : print this message and quit
+```
+
