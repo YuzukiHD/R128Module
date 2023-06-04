@@ -1,5 +1,5 @@
+- [主页](README.md)
 - 概述
-
   - [芯片简介](r128/about_chip.md)
   - [获取芯片资料](r128/get_chip_ds.md)
   - [测试固件下载](r128/test_img.md)
