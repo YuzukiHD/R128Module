@@ -4,7 +4,6 @@
   - [获取芯片资料](r128/get_chip_ds.md)
   - [测试固件下载](r128/test_img.md)
 - 硬件设计
-  - [模组硬件设计指南](hardware/module_hardware_design.md)
   - [芯片硬件设计指南](hardware/hardware_design.md)
   - [硬件设计参考](hardware/ref_hardware_design.md)
   - [芯片物料支持列表](hardware/chip_support_list.md)
