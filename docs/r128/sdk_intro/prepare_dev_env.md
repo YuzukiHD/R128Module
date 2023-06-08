@@ -3,11 +3,15 @@
 系统需求：
 
 - 需要 x64 位处理器和操作系统
-- 操作系统: Windows 10（WSL2），Docker，Linux (必须为64bit)
+- 操作系统: Windows 7 以上，WSL2，Docker，Linux (必须为64bit)
 - 处理器: Intel Pentium Processor E2160
 - 内存: 2 GB RAM
 
-## Linux 搭建开发环境
+## Windows 开发环境搭建
+
+
+
+## Linux 开发环境搭建
 
 这里以常用的几款 Linux 发行版作为示例，搭建开发环境：
 

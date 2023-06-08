@@ -10,6 +10,7 @@
 - SDK入门
   - [开发环境搭建](r128/sdk_intro/prepare_dev_env.md)
   - [获取SDK](r128/sdk_intro/get_sdk.md)
+  - [SDK架构](r128/sdk_intro/sdk_tree.md)
   - [SDK开发入门](r128/sdk_intro/sdk_intro.md)
   - [固件编译](r128/sdk_intro/setup_img.md)
   - [固件烧录](r128/sdk_intro/flash_img.md)
