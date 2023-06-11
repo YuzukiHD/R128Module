@@ -27,6 +27,8 @@ R128 支持使用 USB 烧写系统。对于 Windows 用户可以使用 PhoenixSu
 
 ![image-20230329164017003](assets/post/flash_img/image-20230329164017003.png)
 
+
+
 ### PhoenixSuit - Linux
 
 Linux 版本 PhoenixSuit 支持的发行版本包括 Ubuntu、Fedora、Redhat 及 CentOS 等几个常见的发行版本。目前驱动已经可以支持 4.11.0 版本以上内核，建议安装内核版本号大于4.11.0 的 Linux 发行版本。
@@ -63,11 +65,214 @@ R128 系统的烧写流程如下：
 3. BOOT0 初始化 PSRAM，返回完成信号等待上位机下载 BOOT1（U-Boot）
 4. 上位机收到信号，下载 BOOT1（U-Boot）到 PSRAM 中，并引导运行 BOOT1（U-Boot）
 5. BOOT1（U-Boot） 初始化系统资源，初始化内部 SPI NOR，USB2.0 等资源，等待上位机下载
-6. 上位机下发固件，进入烧写模式
+6. 上位机下发固件，进入烧写模式，烧写固件
+
+#### USB 烧录 log
+
+```
+[0]fes begin commit:61c5f1c6
+[2]set pll end
+[3]board init ok
+[5]fake dram ok
+[7]heap: 0x40a0000 size:0xe000
+[9]lpsram init
+[11]lspsram init aps64
+[13]lspsram dqs:0x011b01b0
+[18]psram chip APS64 init ok!, freq 1920000000
+[22]Init psram controller ok
+[24]hpsram init
+[26]DRAM DQS gate is PD mode.
+[29]DRAM BOOT DRIVE INFO 001: V2.00
+[32]DRAM CLK = 800 MHZ
+[34]dram_tpr11 = 0x0 , dram_tpr12 =0x0
+[38]dram_tpr9 = 0x2222
+[68]DRAM simple test OK.
+[70]DRAM SIZE =8 MB
+[82]fes1 done
+
+
+U-Boot 2018.05-g024e8cd (Jul 04 2023 - 03:57:33 +0000) Allwinner Technology
+
+[01.080]CPU:   Allwinner Family
+[01.083]Model: sun20iw2
+[01.086]DRAM:  8 MiB
+[01.096]Relocation Offset is: 00799000
+[01.131]secure enable bit: 0
+[01.135]CPU=384 MHz,PLL6=192 Mhz,AHB=192 Mhz, APB1=96Mhz  MBus=4125Mhz
+[01.142]sunxi flash type@0 not support fast burn key
+[01.146]flash init start
+[01.149]workmode = 16,storage type = 0
+try card 0
+set card number 0
+get card number 0
+[01.157][mmc]: mmc driver ver uboot2018:2021-07-19 14:09:00
+[01.166][mmc]: get sdc_type fail and use default host:tm1.
+[01.209][mmc]: can't find node "mmc0",will add new node
+[01.214][mmc]: fdt err returned <no error>
+[01.218][mmc]: Using default timing para
+[01.221][mmc]: SUNXI SDMMC Controller Version:0x50310
+[01.235][mmc]: mmc 0 cmd timeout 100 status 100
+[01.240][mmc]: smc 0 err, cmd 8,  RTO
+[01.243][mmc]: mmc 0 close bus gating and reset
+[01.248][mmc]: mmc 0 cmd timeout 100 status 100
+[01.253][mmc]: smc 0 err, cmd 55,  RTO
+[01.256][mmc]: mmc 0 close bus gating and reset
+[01.265][mmc]: mmc 0 cmd timeout 100 status 100
+[01.269][mmc]: smc 0 err, cmd 1,  RTO
+[01.272][mmc]: mmc 0 close bus gating and reset
+[01.277][mmc]: Card did not respond to voltage select!
+[01.282][mmc]: mmc_init: -95, time 56
+[01.285][mmc]: mmc_init: mmc init fail, err -95
+MMC init failed
+try emmc fail
+spi sunxi_slave->max_hz:50000000
+sr3:0x68 --> 0x68
+SF: Detected w25q128 with flag 0x301 with page size 256 Bytes, erase size 4 KiB, total 16 MiB
+not boot mode, unlock all
+[01.360]Loading Environment from SUNXI_FLASH... OK
+[01.369]try to burn key
+[01.372]out of usb burn from boot: not need burn key
+Hit any key to stop autoboot:  0
+sunxi work mode=0x10
+run usb efex
+delay time 2500
+weak:otg_phy_config
+usb init ok
+set address 0xe
+set address 0xe ok
+SUNXI_EFEX_ERASE_TAG
+erase_flag = 0x12
+origin_erase_flag = 0x1
+FEX_CMD_fes_verify_status
+FEX_CMD_fes_verify last err=0
+the 0 mbr table is ok
+*************MBR DUMP***************
+total mbr part 9
+
+part[0] name      :env
+part[0] classname :DISK
+part[0] addrlo    :0x20
+part[0] lenlo     :0x8
+part[0] user_type :32768
+part[0] keydata   :0
+part[0] ro        :0
+
+part[1] name      :env-redund
+part[1] classname :DISK
+part[1] addrlo    :0x28
+part[1] lenlo     :0x8
+part[1] user_type :32768
+part[1] keydata   :0
+part[1] ro        :0
+
+part[2] name      :arm-lpsram
+part[2] classname :DISK
+part[2] addrlo    :0x30
+part[2] lenlo     :0x960
+part[2] user_type :32768
+part[2] keydata   :0
+part[2] ro        :0
+
+part[3] name      :rv-lpsram
+part[3] classname :DISK
+part[3] addrlo    :0x990
+part[3] lenlo     :0xfa0
+part[3] user_type :32768
+part[3] keydata   :0
+part[3] ro        :0
+
+part[4] name      :dsp-hpsram
+part[4] classname :DISK
+part[4] addrlo    :0x1930
+part[4] lenlo     :0x640
+part[4] user_type :32768
+part[4] keydata   :0
+part[4] ro        :0
+
+part[5] name      :rtos-xip
+part[5] classname :DISK
+part[5] addrlo    :0x1f70
+part[5] lenlo     :0x1388
+part[5] user_type :32768
+part[5] keydata   :0
+part[5] ro        :0
+
+part[6] name      :arm-b
+part[6] classname :DISK
+part[6] addrlo    :0x32f8
+part[6] lenlo     :0x960
+part[6] user_type :32768
+part[6] keydata   :0
+part[6] ro        :0
+
+part[7] name      :config
+part[7] classname :DISK
+part[7] addrlo    :0x3c58
+part[7] lenlo     :0x20
+part[7] user_type :32768
+part[7] keydata   :0
+part[7] ro        :0
+
+part[8] name      :UDISK
+part[8] classname :DISK
+part[8] addrlo    :0x3c78
+part[8] lenlo     :0x0
+part[8] user_type :33024
+part[8] keydata   :0
+part[8] ro        :0
+
+need erase flash: 18
+The Chip Erase size is: 16M ...
+SUNXI_EFEX_MBR_TAG
+mbr size = 0x4000
+write primary GPT success
+spinor: skip backup GPT
+[43.156]update partition map
+FEX_CMD_fes_verify_status
+FEX_CMD_fes_verify last err=0
+FEX_CMD_fes_verify_value, start 0x20, size high 0x0:low 0x1000
+FEX_CMD_fes_verify_value 0x8c999e79
+FEX_CMD_fes_verify_value, start 0x28, size high 0x0:low 0x1000
+FEX_CMD_fes_verify_value 0x8c999e79
+FEX_CMD_fes_verify_value, start 0x30, size high 0x0:low 0x121e48
+FEX_CMD_fes_verify_value 0xe3775740
+FEX_CMD_fes_verify_value, start 0x1930, size high 0x0:low 0x7a168
+FEX_CMD_fes_verify_value 0x3b80dabd
+FEX_CMD_fes_verify_value, start 0x1f70, size high 0x0:low 0x23c230
+FEX_CMD_fes_verify_value 0x8bdd937b
+FEX_CMD_fes_verify_value, start 0x32f8, size high 0x0:low 0xe8338
+FEX_CMD_fes_verify_value 0x3e12775c
+FEX_CMD_fes_verify_value, start 0x3c58, size high 0x0:low 0x3c00
+FEX_CMD_fes_verify_value 0xe5de21c
+flash sectors: 0x8000
+FEX_CMD_fes_verify_value, start 0x3c78, size high 0x0:low 0x7e5400
+FEX_CMD_fes_verify_value 0x4536d51f
+bootfile_mode=4
+SUNXI_EFEX_BOOT1_TAG
+boot1 size = 0x8000, max size = 0x80000
+uboot size = 0x124000
+storage type = 3
+skip toc1
+FEX_CMD_fes_verify_status
+FEX_CMD_fes_verify last err=0
+bootfile_mode=4
+SUNXI_EFEX_BOOT0_TAG
+boot0 size = 0xc080
+storage type = 3
+burn first boot0 ok!
+burn boot0 redund ok!
+FEX_CMD_fes_verify_status
+FEX_CMD_fes_verify last err=0
+sunxi_efex_next_action=2
+exit usb
+next work 2
+SUNXI_UPDATE_NEXT_ACTION_REBOOT
+free spi flash
+```
 
 ## UART 烧写
 
-R128 支持使用 UART 烧写系统。不过由于烧录速率较慢（正常烧写16M固件需要10分钟以上），这里不做过多说明。仅给出通讯协议方便定制开发。
+R128 支持使用 UART 烧写系统。不过由于烧录速率较慢（正常烧写16M固件需要8分钟以上），这里不做过多说明。仅给出通讯协议方便定制开发。
 
 | Host | Main-CMD | Sub-CMD | CMD Value | Description              | Remarks                                        |
 | ---- | -------- | ------- | --------- | ------------------------ | ---------------------------------------------- |
