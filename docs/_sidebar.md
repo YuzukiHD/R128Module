@@ -11,9 +11,9 @@
   - [开发环境搭建](r128/sdk_intro/prepare_dev_env.md)
   - [获取SDK](r128/sdk_intro/get_sdk.md)
   - [SDK架构](r128/sdk_intro/sdk_tree.md)
-  - [SDK开发入门](r128/sdk_intro/sdk_intro.md)
-  - [固件编译](r128/sdk_intro/setup_img.md)
+  - [SDK入门](r128/sdk_intro/sdk_intro.md)
   - [固件烧录](r128/sdk_intro/flash_img.md)
+  - [RTOS 使用说明](r128/sdk_intro/rtos_manual.md)
 - 软件入门
   - [快速开发入门](r128/quick_start.md)
   - [编写HelloWorld](r128/hello_world.md)
