@@ -1,7 +1,7 @@
 var pjson = require('./package.json');
 
 module.exports = {
-  contents: [ "_sidebar.md" ], // array of "table of contents" files path
+  contents: [ "../_sidebar.md" ], // array of "table of contents" files path
   pathToPublic: "pdf/R128模组开发文档_" + pjson.version + ".pdf", // path where pdf will stored
   pdfOptions: {
     format: 'A4',
