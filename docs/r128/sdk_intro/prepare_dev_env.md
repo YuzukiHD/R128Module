@@ -9,7 +9,7 @@
 
 ## Windows 开发环境搭建
 
-
+Windows 下开发环境使用的是 Cygwin 搭建。下载地址 [https://www.cygwin.com/install.html](https://www.cygwin.com/install.html)
 
 ## Linux 开发环境搭建
 
