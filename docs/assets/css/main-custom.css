@@ -1,0 +1,128 @@
+:root {
+    --base-font-size    : 14px;
+    --theme-color       : #009688;
+    
+    /* Cover ============================================================================= */
+    --cover-color                                      : #999;
+    --cover-blockquote-color                           : #4CAF50;
+    --blockquote-color                                 : #555;
+    --cover-heading-color                              : #777;
+    --cover-blockquote-font-size                       : var(--font-size-l);
+
+    --cover-button-background--hover                   : #009688;
+    --cover-button-color--hover                        : #FFF;
+    --cover-button-primary-background--hover           : #026b61;
+    --cover-button-padding                             : 1em 4rem;
+    --cover-button-border-radius                       : 2em;
+    
+    --cover-margin                                     : 0 auto;
+    --cover-max-width                                  : 40em;
+    --cover-text-align                                 : center;
+    --cover-background-mask-opacity                    : 0.9;
+    --cover-background-mask-visibility                 : 1;
+    --cover-background-position                        : center center;
+    --cover-background-repeat                          : no-repeat;
+    --cover-background-size                            : cover;
+
+    /* Sidebar ============================================================================= */
+    --sidebar-width                                    : 20rem;
+    
+    /* Content ============================================================================= */
+    --content-max-width                 : 68em;
+
+    /* Blockquote */
+    --blockquote-background             : #FEE;
+
+    /* Code */
+    --code-inline-background            : #282c34;
+    
+    --code-theme-background             : #282c34;
+    --code-theme-tag                    : #7ec699;
+    --code-theme-function               : #f8c555;
+    --code-theme-selector               : #eeeeee;
+    --code-theme-text                   : #ffffff;
+    --code-theme-selection              : #91e8e1;
+    --code-theme-keyword                : #4CAF50;
+    --code-font-size                    : 12px;
+
+    --heading-h1-color                  : #009688;
+    /* --heading-h2-color                  : #c82829; */
+    --heading-h3-color                  : #4CAF50;
+    --heading-font-weight               : 600;
+    --heading-h1-font-family            : -apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji;
+    --heading-h1-font-size              : 2em;
+
+    /* Links */
+    --link-color                        : #009688;
+    --link-color--hover                 : purple;
+    --link-text-decoration              : underline;
+
+    /* Example ============================================================================= */
+    /* Document */
+    --docsify-example-panels-document-width: 90%;
+
+    /* Wrapper */
+    --docsify-example-panels-wrapper-width: 100%;
+
+    /* Standards */
+    --docsify-example-panels-padding-inner : 0px 16px;
+    --docsify-example-panels-padding-surroundings : 0px;
+
+    /* Panel Left */
+    --docsify-example-panels-left-panel-background : transparent;
+    --docsify-example-panels-left-panel-width : 50%;
+
+    /* Panel Right */
+    --docsify-example-panels-right-panel-background : transparent;
+    --docsify-example-panels-right-panel-width : 50%;
+
+    /* Titles */
+    --docsify-example-panels-title-background: transparent;    
+
+}
+
+img {
+    border-radius: 0.5em;
+    box-shadow: rgba(0, 0, 0, 0.55) 0px 7px 26px;
+}
+
+.loading {
+    color: #999;
+    text-align: center;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.github-corner {
+    position:fixed;
+    top:0;
+    right:0;
+}
+
+#docsify-darklight-theme {
+    position: fixed;
+    right: 3%;
+}
+
+.github-fab {
+    margin: 0 !important;
+    color: #FFF;
+}
+
+.sidebar-toggle-button {
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 50% !important;
+    color: #FFF !important;
+    text-align: center !important;
+    font-size: 20px !important;
+    line-height: 40px !important;
+    background: var(--cover-button-primary-background, var(--cover-button-background)) !important;
+    box-shadow: 0px 2px 5px 0px rgba(0, 0, 0, 0.4) !important;
+    position: absolute !important;
+    top: 0px !important;
+    left: -20px !important;
+    cursor: pointer !important;
+}
