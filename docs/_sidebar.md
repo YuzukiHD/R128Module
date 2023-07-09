@@ -7,6 +7,10 @@
   - [芯片硬件设计指南](hardware/hardware_design.md)
   - [硬件设计参考](hardware/ref_hardware_design.md)
   - [芯片物料支持列表](hardware/chip_support_list.md)
+- 模组使用说明
+  - [R128 Module](module/r128_module.md)
+- 开发板使用说明
+  - [R128 DevKit](devkit/r128_devkit.md)
 - SDK入门
   - [开发环境搭建](r128/sdk_intro/prepare_dev_env.md)
   - [获取SDK](r128/sdk_intro/get_sdk.md)
@@ -45,9 +49,9 @@
   - [LEDC (RGB LED)](sdk_module/ledc.md)
   - [UART](sdk_module/uart.md)
   - [LPUART](sdk_module/lpuart.md)
-  
+
   - [TWI](sdk_module/twi.md)
-  
+
   - [TRNG](sdk_module/trng.md)
   - [MBUS](sdk_module/mbus.md)
   - [MMC](sdk_module/mmc.md)
