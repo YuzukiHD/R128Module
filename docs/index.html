@@ -42,18 +42,6 @@
         },
         isExpected: true
       },
-      markdown: {
-        renderer: {
-          code: function (code, lang) {
-            if (lang === "mermaid") {
-              return (
-                '<div class="mermaid">' + mermaid.render('mermaid-svg-' + num++, code) + "</div>"
-              );
-            }
-            return this.origin.code.apply(this, arguments);
-          }
-        }
-      },
     };
 
     window.$docsify.customPageTitle = {
@@ -73,6 +61,15 @@
   <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/external-script.min.js"></script>
   <script src="//unpkg.com/docsify-pagination/dist/docsify-pagination.min.js"></script>
   <script src="//cdn.jsdelivr.net/npm/@sujaykumarh/docsify-plugin-title@1.x/dist/plugin.min.js"></script>
+  <script type="module">
+    import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";
+    mermaid.initialize({ startOnLoad: true });
+    window.mermaid = mermaid;
+  </script>
+  <script src="//unpkg.com/docsify-mermaid@2.0.0/dist/docsify-mermaid.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/pdfobject/2.1.1/pdfobject.min.js"></script> 
+  <script src="path-to-file/docsify-pdf-embed.js"></script>
+  <script src="//unpkg.com/docsify-pdf-embed-plugin/src/docsify-pdf-embed.js"></script>
 </body>
 
 </html>
