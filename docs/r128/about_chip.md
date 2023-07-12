@@ -7,6 +7,14 @@ R128是一颗专为“音视频解码”而打造的全新高集成度 SoC，主
 - 拥有丰富的音频接口 IIS/PCM、OWA、DMIC、LINEOUT、MICIN 以及通用通讯接口 IIC、UART、SDIO、 SPI、ISO7816卡接口；同时支持 U 盘、SD卡、IR-TX/RX；
 - 内置 LDO、GPADC、LEDC，简化系统方案设计，降低 BOM成本。
 
+## 芯片应用场景
+
+![image-20220601152708483](assets/post/about_chip/R128APP1.jpg)
+
+## 芯片实物图
+
+![R128ZB.png](assets/post/about_chip/1680832460884-r128zb.png)
+
 ## 芯片框图
 
 ![image-20230319113235278](assets/post/about_chip/image-20230319113235278.png)
