@@ -19,6 +19,6 @@
 - [高清引脚图.svg](https://yuzukihd.top/R128Module/assets/info/R128-S2.svg)
 
 ```pdf
-/assets/info/R128-S2.pdf
+R128Module/assets/info/R128-S2.pdf
 ```
 
