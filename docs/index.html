@@ -27,7 +27,20 @@
       name: 'R128 Documents',
       subMaxLevel: 3,
       loadSidebar: true,
-
+      count:{
+        countable: true,
+        position: 'top',
+        margin: '10px',
+        float: 'right',
+        fontsize:'0.9em',
+        color:'rgb(90,90,90)',
+        language:'chinese',
+        localization: {
+          words: "",
+          minute: ""
+        },
+        isExpected: true
+      },
       markdown: {
         renderer: {
           code: function (code, lang) {
