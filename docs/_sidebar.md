@@ -25,6 +25,8 @@
   - [引脚复用配置](sdk_base/gpio_mux.md)
   - [RTOS软件包配置](sdk_base/rtos_package.md)
   - [资源划分与启动管理](sdk_base/boot_up.md)
+- 外设模块配置
+  - [USB 外设配置](peripheral/usb.md)
 - 应用开发案例
   - [LVGL](demo/lvgl.md)
 - 基础组件开发指南
