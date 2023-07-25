@@ -1,131 +1,124 @@
 # 获取SDK
 
-## 配置身份认证
+SDK 使用 Repo 工具管理，拉取 SDK 需要配置安装 Repo 工具。
 
-SDK 获取需要使用 `Public Key` 方法认证登陆 SDK 资源站后下载 SDK。远程登录密码认证的方式有三种，`password`、`Keyboard Interactive`、`Public Key`。前面两种方式就是密码认证，含义都是一样大同小异。第三种是登录方式最安全的一种，不需要明文的密码传输，且绑定本地环境。
+> Repo is a tool built on top of Git. Repo helps manage many Git repositories, does the uploads to revision control systems, and automates parts of the development workflow. Repo is not meant to replace Git, only to make it easier to work with Git. The repo command is an executable Python script that you can put anywhere in your path.
 
- `Public Key` 方法的客户端利用服务端发过来的私钥，进行登录的认证，认证服务端的公钥。从而实现安全的访问。
+Repo官网：[git-repo](https://gerrit.googlesource.com/git-repo)
 
-### 生成钥匙对
+## 安装 Repo 工具
 
-```shell
-ssh-keygen
+可以用包管理器进行安装：
+
+```bash
+# Debian/Ubuntu.
+$ sudo apt-get install repo
+
+# Gentoo.
+$ sudo emerge dev-vcs/repo
 ```
 
-会询问你保存的位置与密码，默认回车即可，不需要配置。
+也可以手动单独安装：
 
-![image-20230406111641720](assets/post/get_sdk/image-20230406111641720.png)
-
-前往生成的文件夹可以找到刚才生成的钥匙对。
-
-```
-cd ~/.ssh/
-```
-
-![image-20230406111933963](assets/post/get_sdk/image-20230406111933963.png)
-
-```
-总用量 8
--rw------- 1 yuzuki yuzuki 2610 4月   6 11:16 id_rsa      # 密钥
--rw-r--r-- 1 yuzuki yuzuki  578 4月   6 11:16 id_rsa.pub  # 公钥
+```bash
+$ mkdir -p ~/.bin
+$ PATH="${HOME}/.bin:${PATH}"
+$ curl https://storage.googleapis.com/git-repo-downloads/repo > ~/.bin/repo
+$ chmod a+rx ~/.bin/repo
 ```
 
-### 获取公钥
+国内镜像源安装：
 
-可以使用 `cat` 命令获取公钥
-
-```
-cat id_rsa.pub
-```
-
-![image-20230406112221739](assets/post/get_sdk/image-20230406112221739.png)
-
-输出的内容就是公钥，全部复制即可。
-
-![image-20230406112405593](assets/post/get_sdk/image-20230406112405593.png)
-
-### 上传公钥到全志服务平台
-
-登陆全志客户服务平台 [open.allwinnertech.com](https://open.allwinnertech.com/)，点击资源下载界面，在左侧栏找到公钥管理。
-
-![image-20230406110908680](assets/post/get_sdk/image-20230406110908680.png)
-
-点击创建，把刚才复制的公钥复制过来。名称随意。
-
-![image-20230406112512253](assets/post/get_sdk/image-20230406112512253.png)
-
-创建完成
-
-![image-20230406112549518](assets/post/get_sdk/image-20230406112549518.png)
-
-### 测试是否配置成功
-
-重启本地开发环境，让系统应用钥匙对的配置。
-
-![image-20230406112748616](assets/post/get_sdk/image-20230406112748616.png)
-
-使用 `ssh` 命令测试是否可以正常访问远程服务器。
-
-```shell
- ssh <改成你的用户名>@sdk.allwinnertech.com 
+```bash
+$ mkdir -p ~/.bin
+$ PATH="${HOME}/.bin:${PATH}"
+$ curl https://mirrors.bfsu.edu.cn/git/git-repo > ~/.bin/repo
+$ chmod a+rx ~/.bin/repo
 ```
 
-![image-20230406113303481](assets/post/get_sdk/image-20230406113303481.png)
+由于谷歌服务器位于国外，每次运行时Repo会检查更新导致下载较慢，国内用户可以配置镜像源。否则会像下图一样卡住不动然后失败。
 
-见到 `Welcome to Allwinnertech Cloud Service !` 就是配置成功了。
+![image-20230728102705980](assets/post/get_sdk/image-20230728102705980.png)
 
-如果遇到需要输入密码的情况，就说明配置错误。例如这里没有正确大小写全志客户服务平台注册的用户名。
+### 更换镜像源
 
-![image-20230406113711069](assets/post/get_sdk/image-20230406113711069.png)
+Repo 的运行过程中会尝试访问官方的 git 源更新自己，更换镜像源可以提高下载速度。将如下内容复制到你的`~/.bashrc` 里
 
-## 配置SDK拉取工具
-
-SDK 使用本地化修改过的 `repo` 进行管理，与 Android 的 AOSP 的源码管理类似
-
-### 拉取工具
-
-使用 `git` 命令拉取 `repo` 管理工具。
-
-```
-git clone ssh://<你的用户名>@sdk.allwinnertech.com/git_repo/repo 
+```bash
+$ echo export REPO_URL='https://mirrors.bfsu.edu.cn/git/git-repo' >> ~/.bashrc
+$ source ~/.bashrc
 ```
 
-![image-20230406114025512](assets/post/get_sdk/image-20230406114025512.png)
+如果您使用的是 dash、hash、 zsh 等 shell，请参照 shell 的文档配置。
 
-编辑 `repo` 工具，修改用户名
+### 配置保存身份认证
 
-```
-cd repo
-gedit repo
-```
-
-![image-20230406114304513](assets/post/get_sdk/image-20230406114304513.png)
-
-将 `username` 改成全志客户服务注册的用户名，例如我的 `YuzukiTsuru`，然后保存。
-
-![image-20230406114436814](assets/post/get_sdk/image-20230406114436814.png)
-
-然后将脚本拷贝到 `bin` 文件夹方便使用
+新版本 git 默认加强了安全性，身份认证不会保存，导致拉取 repo 需要多次输入密码，可以用下列命令配置：
 
 ```
-chmod 777 repo
-sudo cp repo /usr/bin/repo
+git config --global credential.helper store
 ```
 
-![image-20230406115106961](assets/post/get_sdk/image-20230406115106961.png)
+![image-20230728103223753](assets/post/get_sdk/image-20230728103223753.png)
 
-然后运行 `repo` 查看是否正常运行。显示 `error: repo is not installed.  Use "repo init" to install it here.` 就是正常情况。
+### 常见问题
 
-![image-20230406115220923](assets/post/get_sdk/image-20230406115220923.png)
+- 卡在`Downloading Repo source from https://gerrit.googlesource.com/git-repo` 不动。
+   - 国内网络较慢，参照上面的更换镜像源解决。
 
-如果出现 `/usr/bin/env: “python”: 没有那个文件或目录`，用以下命令创建链接即可
+- 配置保存身份认证无效不启用
+   - 检查是否运行了 `sudo git config --global credential.helper store` 使用了 `sudo` 后保存的信息会存储到 `root` 用户下并非当前用户。
+- 出现错误 `fatal: cannot make  directory: File exists`
+   - 之前拉取了 repo 但是不完整，需要删除 `.repo` 文件夹重新拉取
 
-```
-sudo ln -s /usr/bin/python2 /usr/bin/python
-```
-
-![image-20230406114927225](assets/post/get_sdk/image-20230406114927225.png)
 
 ## SDK 拉取
 
-!> SDK 将在正式发布后开放下载
+以 `tina-v853-open` 为例，讲述如何拉取 SDK。
+
+### 新建文件夹保存 SDK
+
+使用 `mkdir` 命令新建文件夹，保存之后需要拉取的 SDK，然后 `cd` 进入到刚才新建的文件夹中。
+
+```bash
+$ mkdir tina-v853-open
+$ cd tina-v853-open
+```
+
+### 初始化 Repo 仓库
+
+使用 `repo init` 命令初始化仓库，`tina-v853-open` 的仓库地址是 `https://sdk.aw-ol.com/git_repo/V853Tina_Open/manifest.git` 需要执行命令：
+
+```bash
+$ repo init -u https://sdk.aw-ol.com/git_repo/V853Tina_Open/manifest.git -b master -m tina-v853-open.xml
+```
+
+![image-20230728104123334](assets/post/get_sdk/image-20230728104123334.png)
+
+如果提示 `Username for 'https://sdk.aw-ol.com':` 请输入 [全志在线开发者论坛](https://bbs.aw-ol.com/) 的用户名和密码。**（注：需要全志在线开发者论坛LV2等级以上用户才有权限拉取 SDK）**
+
+![image-20230728104225295](assets/post/get_sdk/image-20230728104225295.png)
+
+### 拉取 SDK
+
+使用命令 `repo sync` 拉取 SDK
+
+```bash
+$ repo sync
+```
+
+由于 SDK 普遍较大，拉取可能需要一定的时间。
+
+![image-20230728110029144](assets/post/get_sdk/image-20230728110029144.png)
+
+### 创建开发环境
+
+使用命令 `repo start` 创建开发环境分支
+
+```bash
+$ repo start devboard-v853-tina-for-awol --all
+```
+
+![image-20230728110139688](assets/post/get_sdk/image-20230728110139688.png)
+
+至此，SDK 获取完毕。
