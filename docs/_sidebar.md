@@ -49,12 +49,11 @@
   - [G2D](sdk_module/g2d.md)
   - [HWSPINLOCK](sdk_module/spin.md)
   - [IR](sdk_module/ir.md)
+  - [PMU](sdk_module/pmu.md)
   - [LEDC (RGB LED)](sdk_module/ledc.md)
   - [UART](sdk_module/uart.md)
   - [LPUART](sdk_module/lpuart.md)
-
   - [TWI](sdk_module/twi.md)
-
   - [TRNG](sdk_module/trng.md)
   - [MBUS](sdk_module/mbus.md)
   - [MMC](sdk_module/mmc.md)
