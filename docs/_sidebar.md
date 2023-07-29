@@ -37,6 +37,7 @@
   - [显示框架](sdk_base/disp.md)
   - [安全](sdk_base/sos.md)
   - [蓝牙](sdk_base/bluetooth.md)
+  - [Wi-Fi](sdk_base/wifi.md)
   - [异构多核通信](sdk_base/amp.md)
 - SDK HAL 模块开发指南
   - [CE](sdk_module/ce.md)

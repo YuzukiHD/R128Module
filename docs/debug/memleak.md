@@ -17,7 +17,7 @@
 
 rtplayer_test 循环播放老化音频十几分钟后，音乐停止播放，报错如下：
 
-![softvol_ap_update_mode_no_memory.png](assets/post/memleak/30e810ca0c914761848bd595a19a35a1.jpeg)
+![softvol_ap_update_mode_no_memory.png](assets/post/memleak/30.jpg)
 
 ## 问题分析
 
@@ -181,4 +181,4 @@ startSoundDevice at /workspace/codec_lib/cedarx_rtos/temp/rtos_cedarx/cedarx/rto
 ## 解决方法
 
 只在`AudioTrackCreateWithStream`时创建一次，`AudioTrackDestroy`，测试10小时左右未出现内存泄漏
-![AudioTrack_soft.png](assets/post/memleak/703171b4135e4a8eb53fa2dcc2a450e5.jpeg)
+![AudioTrack_soft.png](assets/post/memleak/70.jpg)
