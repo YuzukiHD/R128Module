@@ -281,11 +281,11 @@ wifimg.h）
 7. wmg_p2p.c(p2p 模式抽象层) 会根据不同的平台调用到linux_p2p.c(linux 平台具体实现文件)。
 8. 自定义扩展(expand_cmd.c) 与系统或模组特殊功能有关，例如设置或获取mac 地址，特殊ioct等功能。
 
-### Wi-Fi Manager 核心代码关键结构体说明
+## Wi-Fi Manager 核心代码关键结构体说明
 
 该章节主要用于描述核心代码中使用到的一些关键的结构体。不需要单独阅读该章节，该章节属于查询性质，当在其他章节中查看到需要查询的结构体时再查询该章节即可。该章节的关键结构体都在 `Wi-Fi Manager/core/include/wifimg.h` 文件里定义。
 
-#### 定义Wi-Fi Manager 的错误码
+### 定义Wi-Fi Manager 的错误码
 
 结构体描述：该结构体主要用于定义Wi-Fi Manager 各函数执行后的返回码
 
@@ -313,7 +313,7 @@ typedef enum {
 - WMG_STATUS_TIMEOUT：函数执行超时
 - WMG_STATUS_UNHANDLED：函数不处理该次调用
 
-#### 定义Wi-Fi Manager 支持的模式
+### 定义Wi-Fi Manager 支持的模式
 结构体描述：该结构体主要用于定义Wi-Fi Manager 的模式
 
 ```c
@@ -332,7 +332,7 @@ typedef enum {
 - WIFI_P2P：p2p 模式
 - WIFI_MODE_UNKNOWN：未定义模式
 
-#### 定义Wi-Fi Manager 网络接口状态
+### 定义Wi-Fi Manager 网络接口状态
 
 结构体描述：该结构体主要用于定义Wi-Fi Manager 对网卡设备状态的识别
 
@@ -346,7 +346,7 @@ typedef enum {
 - WLAN_STATUS_DOWN：网卡设备关闭
 - WLAN_STATUS_UP：网卡设备启动
 
-#### 定义Wi-Fi Manager 收到的消息类型
+### 定义Wi-Fi Manager 收到的消息类型
 
 结构体描述：该结构体主要用于定义Wi-Fi Manager 收到的回调消息的类型
 
@@ -372,7 +372,7 @@ typedef enum {
 - WIFI_MSG_ID_MONITOR：monitor 模式的消息
 - WIFI_MSG_ID_MAX：无意义消息类型，界限结构体用
 
-#### 定义Wi-Fi Manager 的加密方式
+### 定义Wi-Fi Manager 的加密方式
 
 结构体描述：该结构体主要用于定义Wi-Fi Manager 的加密方式
 
@@ -392,7 +392,7 @@ typedef enum {
 - WIFI_SEC_WPA2_PSK：wpa2 加密方式
 - WIFI_SEC_WPA3_PSK：wpa3 加密方式
 
-#### 定义Wi-Fi Manager station 模式的状态
+### 定义Wi-Fi Manager station 模式的状态
 
 结构体描述：该结构体主要用于定义Wi-Fi Manager 的station 模式状态
 
@@ -418,7 +418,7 @@ typedef enum {
 - WIFI_STA_DISCONNECTING：station 模式处于正在取消连接状态
 - WIFI_STA_DISCONNECTED：station 模式处于已取消连接状态
 
-#### 定义Wi-Fi Manager station 模式在连接过程中的事件
+### 定义Wi-Fi Manager station 模式在连接过程中的事件
 
 结构体描述：该结构体主要用于定义Wi-Fi Manager 的station 模式在连接ap 过程中的事件
 
@@ -472,7 +472,7 @@ typedef enum {
 - WIFI_TERMINATING：终止
 - WIFI_UNKNOWN：未知
 
-#### 定义 Wi-Fi Manager station 模式的一些信息
+### 定义 Wi-Fi Manager station 模式的一些信息
 
 结构体描述：该结构体主要用于定义Wi-Fi Manager 的station 模式的一些信息
 
@@ -500,7 +500,7 @@ typedef struct {
 - gw_addr[4]：网关地址
 - sec：加密方式
 
-#### 定义Wi-Fi Manager station 模式保存的ap 信息
+### 定义Wi-Fi Manager station 模式保存的ap 信息
 
 结构体描述：该结构体主要用于定义Wi-Fi Manager station 模式时曾经连接过的一条ap 信息
 
@@ -518,7 +518,7 @@ typedef struct {
 - bssid[BSSID_MAX_LEN]：连接过的ap 的bssid
 - flags[16]：一些状态码，用户可以不用关心
 
-#### 定义Wi-Fi Manager station 模式时要进行连接的ap 的配置信息
+### 定义Wi-Fi Manager station 模式时要进行连接的ap 的配置信息
 
 结构体描述：该结构体主要用于描述Wi-Fi Manager station 模式时要连接过的ap 的配置信息，在连接某个特定ap 时，用户需要填充这个结构体。
 
@@ -536,7 +536,7 @@ typedef struct {
 - sec：要连接的ap 的加密方式
 - fast_connect：该参数暂时没有作用，扩展用，用户可以不用关心
 
-#### 定义Wi-Fi Manager station 模式时扫描到的一条 ap 结果
+### 定义Wi-Fi Manager station 模式时扫描到的一条 ap 结果
 
 结构体描述：该结构体主要用于定义Wi-Fi Manager station 模式时扫描到的一条ap 结果包含什么内容
 
@@ -556,7 +556,7 @@ typedef struct {
 - rssi：扫描到的ap 的信号强度
 - key_mgmt：扫描到的ap 的加密方式
 
-#### 定义Wi-Fi Manager ap 模式的状态
+### 定义Wi-Fi Manager ap 模式的状态
 
 结构体描述：该结构体主要用于描述Wi-Fi Manager ap 模式时的状态
 
@@ -570,7 +570,7 @@ typedef enum {
 - WIFI_AP_DISABLE：ap 模式处于非使能状态
 -  WIFI_AP_ENABLE：ap 模式处于使能状态
 
-#### 定义Wi-Fi Manager ap 模式时的事件
+### 定义Wi-Fi Manager ap 模式时的事件
 
 结构体描述：该结构体主要用于描述Wi-Fi Manager ap 模式时的状态
 
@@ -590,7 +590,7 @@ typedef enum {
 - WIFI_AP_STA_CONNECTED：ap 模式触发了有sta 进行连接事件
 - WIFI_AP_UNKNOWN：ap 模式下未定义事件
 
-#### 定义Wi-Fi Manager ap 模式时开启的ap 热点的配置信息
+### 定义Wi-Fi Manager ap 模式时开启的ap 热点的配置信息
 
 结构体描述：该结构体主要用于定义Wi-Fi Manager ap 模式时开启的ap 热点的配置信息
 
@@ -620,7 +620,7 @@ typedef struct {
 - dev_list：连接到ap 热点的sta 设备(信息获取非设置)
 - sta_num：连接到ap 热点的sta 设备的个数(信息获取非设置)
 
-#### 定义Wi-Fi Manager monitor 模式的状态
+### 定义Wi-Fi Manager monitor 模式的状态
 
 结构体描述：该结构体主要用于定义Wi-Fi Manager monitor 模式的状态
 
@@ -634,7 +634,7 @@ typedef enum {
 - WIFI_MONITOR_DISABLE：使能状态的monitor 模式
 - WIFI_MONITOR_ENABLE：使能状态的monitor 模式
 
-#### 定义Wi-Fi Manager monitor 模式时收到的数据帧
+### 定义Wi-Fi Manager monitor 模式时收到的数据帧
 
 结构体描述：该结构体主要用于描述Wi-Fi Manager monitor 模式时收到的帧的内容
 
@@ -652,7 +652,7 @@ typedef struct {
 - channel：monitor 模式时从什么信道收到的帧
 - info：monitor 模式时收到帧的扩展信息(目前暂时没有意义)
 
-#### 定义Wi-Fi Manager p2p 模式时开启p2p 热点的配置信息
+### 定义Wi-Fi Manager p2p 模式时开启p2p 热点的配置信息
 
 ```c
 typedef struct {
@@ -668,7 +668,7 @@ typedef struct {
 - p2p_go_intent：启动p2p 模式是go intent 值设置多少(0 ~ 15 会影响到gc go 的协商)
 - auto_connect：是否支持被动连接
 
-#### 定义Wi-Fi Manager p2p 模式时p2p 连接成功后的信息
+### 定义Wi-Fi Manager p2p 模式时p2p 连接成功后的信息
 
 ```c
 typedef struct {
@@ -684,7 +684,7 @@ typedef struct {
 - freq：连接成功后的频率(信道)
 - ssid：连接成功后的ssid
 
-#### 定义Wi-Fi Manager p2p 模式时的状态
+### 定义Wi-Fi Manager p2p 模式时的状态
 
 ```c
 typedef enum {
@@ -702,7 +702,7 @@ typedef enum {
 - WIFI_P2P_CONNECTD_GO：连接状态，协商模式未go
 - WIFI_P2P_DISCONNECTD：未连接状态
 
-#### 定义Wi-Fi Manager p2p 模式时的事件
+### 定义Wi-Fi Manager p2p 模式时的事件
 
 ```c
 typedef enum {
@@ -751,7 +751,7 @@ typedef enum {
 - WIFI_P2P_GROUP_DNS_FAILURE：p2p dns 服务启动失败事件
 - WIFI_P2P_UNKNOWN：未知p2p 事件
 
-#### 定义Wi-Fi Manager 收到的回调事件
+### 定义Wi-Fi Manager 收到的回调事件
 
 ```c
 typedef struct {
@@ -781,11 +781,11 @@ wifi_msg_id_t id;
 - p2p_state：回调事件数据类型是p2p 模式状态信息
 - frame：回调事件数据类型是monitor 模式收到的数据帧
 
-### 核心代码各函数说明
+## Wi-Fi Manager 核心代码各函数说明
 
 该章节主要用于介绍核心代码中各API (需要2 次开发的人员重点关注和查阅)
 
-#### 初始化Wi-Fi Manager
+### 初始化Wi-Fi Manager
 
 想要使用Wi-Fi Manager 的功能前，必须调用该函数进行Wi-Fi Manager 初始化。
 
@@ -805,7 +805,7 @@ wmg_status_t wifi_init(void)
 
 
 
-#### 反初始化Wi-Fi Manager
+### 反初始化Wi-Fi Manager
 
 反初始化Wi-Fi Manager
 
@@ -826,7 +826,7 @@ wmg_status_t wifi_deinit(void)
 
 
 
-#### 打开Wi-Fi Manager 某种模式
+### 打开Wi-Fi Manager 某种模式
 
 想要使用Wi-Fi Manager 的功能前，必须调用该函数进行Wi-Fi Manager 初始化。
 
@@ -847,7 +847,7 @@ wmg_status_t wifi_on(wifi_mode_t mode)
 
 
 
-#### 关闭Wi-Fi Manager
+### 关闭Wi-Fi Manager
 
 关闭Wi-Fi Manager 后，要重新使用Wi-Fi Manager 需要重新调用wifi_on
 
@@ -868,7 +868,7 @@ wmg_status_t wifi_off(void);
 
 
 
-#### sta 模式下连接ap
+### sta 模式下连接ap
 
 连接到某个特定的ap
 
@@ -889,7 +889,7 @@ wmg_status_t wifi_sta_connect(wifi_sta_cn_para_t * cn_para）
 
 
 
-#### sta 模式下断开与ap 的连接
+### sta 模式下断开与ap 的连接
 
 只有在已连接上某个ap 后调用该接口才有用，否则会返回失败
 
@@ -910,7 +910,7 @@ wmg_status_t wifi_sta_disconnect(void)
 
 
 
-#### sta 模式下自动连接上某个ap
+### sta 模式下自动连接上某个ap
 
 该功能主要有2 个附加作用
 
@@ -934,7 +934,7 @@ wmg_status_t wifi_sta_auto_reconnect(wmg_bool_t enable)
 
 
 
-#### sta 模式下获取当前状态的一些信息
+### sta 模式下获取当前状态的一些信息
 
 获取当前station 模式状态的一些信息(包括连接上的ap 的ssid，bssid 等)
 
@@ -955,7 +955,7 @@ wmg_status_t wifi_sta_get_info(wifi_sta_info_t * sta_info)
 
 
 
-#### sta 模式下列出已保存的ap 的信息
+### sta 模式下列出已保存的ap 的信息
 
 在sta 模式下移除某个ap 信息
 
@@ -976,7 +976,7 @@ wmg_status_t wifi_sta_list_networks(wifi_sta_list_t * sta_list);
 
 
 
-#### sta 模式下移除某个ap 信息
+### sta 模式下移除某个ap 信息
 
 该接口主要配合wifi_sta_list_networks 接口使用
 
@@ -997,7 +997,7 @@ wmg_status_t wifi_sta_remove_networks(char * ssid)
 
 
 
-#### ap 模式下使能ap 热点功能
+### ap 模式下使能ap 热点功能
 
 根据 wifi_ap_config_t 的设置不同，启动的热点会不同
 
@@ -1018,7 +1018,7 @@ wmg_status_t wifi_sta_remove_networks(char * ssid)
 
 
 
-#### ap 模式下关闭ap 热点功能
+### ap 模式下关闭ap 热点功能
 
 在ap 模式下关闭ap 热点功能
 
@@ -1039,7 +1039,7 @@ wmg_status_t wifi_ap_disable(void)
 
 
 
-#### ap 模式下获取当前ap 热点的配置信息
+### ap 模式下获取当前ap 热点的配置信息
 
 该接口主要是用于获取当前启动的ap 热点的配置信息
 
@@ -1060,7 +1060,7 @@ wifi_ap_get_config(wifi_ap_config_t * ap_config)
 
 
 
-#### monitor 模式使能monitor 功能
+### monitor 模式使能monitor 功能
 
 在monitor 模式下使能monitor 功能
 
@@ -1081,7 +1081,7 @@ wmg_status_t wifi_monitor_enable(uint8_t channel)
 
 
 
-#### monitor 模式下动态切换监听的信道
+### monitor 模式下动态切换监听的信道
 
 在monitor 模式下动态切换要监听信道
 
@@ -1102,7 +1102,7 @@ wmg_status_t wifi_monitor_set_channel(uint8_t channel)
 
 
 
-#### monitor 模式下关闭monitor 功能
+### monitor 模式下关闭monitor 功能
 
 monitor 模式下关闭monitor 功能
 
@@ -1123,7 +1123,7 @@ wmg_status_t wifi_monitor_disable(void)
 
 
 
-#### p2p 模式下使能p2p 功能
+### p2p 模式下使能p2p 功能
 
 
 
@@ -1144,7 +1144,7 @@ wmg_status_t wifi_p2p_enable(wifi_p2p_config_t *p2p_config)
 
 
 
-#### p2p 模式下关闭p2p 功能
+### p2p 模式下关闭p2p 功能
 
 
 函数原型
@@ -1164,7 +1164,7 @@ wmg_status_t wifi_p2p_disable(void);
 
 
 
-#### p2p 模式下发起扫描
+### p2p 模式下发起扫描
 
 在执行扫描的过程中也需要对端发起扫描，否则扫描不到对端设备
 
@@ -1185,7 +1185,7 @@ wmg_status_t wifi_p2p_find(wifi_p2p_peers_t *p2p_peers, uint8_t find_second);
 
 
 
-#### p2p 模式下连接另外一个p2p 设备
+### p2p 模式下连接另外一个p2p 设备
 
 连接的过程中需要对方同意连接，否则会连接失败
 
@@ -1204,7 +1204,7 @@ wmg_status_t wifi_p2p_connect(uint8_t *p2p_mac_addr);
 - 0：成功；
 - 非0：失败；
 
-#### p2p 模式下断开已连接的p2p 设备
+### p2p 模式下断开已连接的p2p 设备
 
 函数原型
 
@@ -1221,7 +1221,7 @@ wmg_status_t wifi_p2p_disconnect(uint8_t *p2p_mac_addr);
 - 0：成功；
 - 非0：失败；
 
-#### p2p 模式下获取p2p 设备的某些信息
+### p2p 模式下获取p2p 设备的某些信息
 函数原型
 
 ```c
@@ -1237,7 +1237,7 @@ wmg_status_t wifi_p2p_disconnect(uint8_t *p2p_mac_addr);
 - 0：成功；
 - 非0：失败；
 
-#### 任意模式下注册回调函数
+### 任意模式下注册回调函数
 
 该接口可以在任意模式下调用，但必须在调用wifi_on 函数后才能调用，否则会注册回调函数失败。
 
@@ -1258,7 +1258,7 @@ wmg_status_t wifi_register_msg_cb(wifi_msg_cb_t msg_cb)
 
 
 
-#### sta 模式下设置扫描参数
+### sta 模式下设置扫描参数
 
 预留接口，功能没有实现
 
@@ -1279,7 +1279,7 @@ wmg_status_t wifi_set_scan_param(wifi_scan_param_t * scan_param)
 
 
 
-#### sta 模式下获取扫描结果
+### sta 模式下获取扫描结果
 
 调用者需要根据具体情况申请内存
 
@@ -1300,7 +1300,7 @@ wmg_status_t wifi_get_scan_results(wifi_scan_result_t * result, uint32_t *bss_nu
 
 
 
-#### 任意模式下设置mac 地址
+### 任意模式下设置mac 地址
 
 该接口可以在任意模式下调用，但必须在调用wifi_on 函数后才能调用，否则会设置失败。
 
@@ -1322,7 +1322,7 @@ wifi_set_mac(const char * ifname, uint8_t * mac_addr)
 
 
 
-#### 任意模式下获取mac 地址
+### 任意模式下获取mac 地址
 
 该接口可以在任意模式下调用，但必须在调用wifi_on 函数后才能调用，否则会设置失败。需要调用者申请内存来保存mac 地址
 
@@ -1344,7 +1344,7 @@ wifi_get_mac(const char * ifname, uint8_t * mac_addr)
 
 
 
-#### 配网模式
+### 配网模式
 
 该接口可以在任意模式下调用，调用后已某种配网模式去获取配网结果(ssid和psk)，配网模式根据当前系统的支持
 
@@ -1367,7 +1367,7 @@ wmg_status_t wifi_linkd_protocol(wifi_linkd_mode_t mode, void params, int second
 
 
 
-#### 任意模式下获取Wi-Fi Manager 的状态信息
+### 任意模式下获取Wi-Fi Manager 的状态信息
 该接口可以在任意模式下调用，用于获取Wi-Fi Manager 的状态信息，只有返回值为0 时获取的状态信息才有效
 
 函数原型
@@ -1385,11 +1385,11 @@ wmg_status_t wifi_get_wmg_state(wifi_wmg_state_t *wmg_state);
 - 0：成功；
 - 非0：失败；
 
-### Wi-Fi Manager 核心代码函数调用流程介绍
+## Wi-Fi Manager 核心代码函数调用流程介绍
 
 下面提供Wi-Fi Manager 各功能的开发流程(简单介绍api 的调用流程)。更详细的调用流程可以参考wifi_deamon.c 文件里的编写流程。
 
-#### 以某种模式打开Wi-Fi Manager
+### 以某种模式打开Wi-Fi Manager
 
 ```c
 1.wifi_on(WIFI_STATION) ‑‑‑‑> 以station模式打开Wi-Fi Manager
@@ -1399,7 +1399,7 @@ wmg_status_t wifi_get_wmg_state(wifi_wmg_state_t *wmg_state);
 在调用libwifimg‑v2.0库中的任何api前都必须调用Wi-Fi Manager_init函数
 ```
 
-#### station 模式—关闭Wi-Fi Manager
+### station 模式—关闭Wi-Fi Manager
 
 ```c
 wifi_on(WIFI_STATION); ‑‑‑‑> 以station模式打开Wi-Fi Manager
@@ -1410,7 +1410,7 @@ wifi_off(); ‑‑‑‑> 关闭Wi-Fi Manager
 调用wifi_off后想再使用Wi-Fi Manager必须重新再调用一次wifi_on。
 ```
 
-#### station 模式—扫描环境中存在哪些ap
+### station 模式—扫描环境中存在哪些ap
 
 ```c
 wifi_on(WIFI_STATION);
@@ -1425,7 +1425,7 @@ wifi_get_scan_results(scan_res, &bss_num, RES_LEN);
     假设用户在调用该函数前，申请了一个可以保存5条扫描结果的buff，那么scan_res填写buff指针，RES_LEN填写5，扫描后系统扫到了20条结果。用户只能获取到5条扫描结果，不过可以在bss_num中获取到系统中实际上扫描到20条结果。用户环境ap如果多，可以把buff调大点，如果少可以把buff调小一点。
 ```
 
-#### station 模式—连接某个特定的ap
+### station 模式—连接某个特定的ap
 
 ```c
 wifi_on(WIFI_STATION);
@@ -1436,7 +1436,7 @@ wifi_sta_connect(&cn_para);
 其中cn_para是一个连接参数配置结构体，只需要填充好ssid，password，sec字段参数即可，fast_connect字段预留字段，暂时没有作用。
 ```
 
-#### station 模式—断开与某个ap 的连接
+### station 模式—断开与某个ap 的连接
 
 ```c
 wifi_on(WIFI_STATION);
@@ -1449,7 +1449,7 @@ wifi_sta_disconnect()；
 在连接上某个ap后调用wifi_sta_disconnect函数可以断开与ap的连接。
 ```
 
-#### station 模式—设置自动连接功能
+### station 模式—设置自动连接功能
 
 ```c
 wifi_on(WIFI_STATION);
@@ -1466,7 +1466,7 @@ wifi_sta_auto_reconnect(false);
 (2).开启自动连接功能后，如果已经连上了某个ap，但某些原因与该ap断开了连接，系统会尝试继续与该ap进行连接
 ```
 
-#### station 模式—列出已保存的ap 列表信息
+### station 模式—列出已保存的ap 列表信息
 
 ```c
 wifi_on(WIFI_STATION);
@@ -1477,7 +1477,7 @@ wifi_sta_list_networks(&sta_list_networks);
 	sta_list_networks参数是wifi_sta_list_t类型的结构体，需要用户申请相关的内存，其中list_nod字段用于保存列表信息，list_num字段用于告诉系统列表空间的大小，sys_list_num字段是返回值，调用函数后系统实际列表项数目会保存在该字段。
 ```
 
-#### station 模式—列出连接的ap 信息
+### station 模式—列出连接的ap 信息
 
 ```c
 wifi_on(WIFI_STATION);
@@ -1490,7 +1490,7 @@ wifi_sta_get_info(&wifi_sta_info);
 该函数主要是获取连接的ap的信息，因此需要连接上某个ap后才能调用，调用是用户需要自己申请一个wifi_sta_info结构体
 ```
 
-#### station 模式—移除某个或全部已保存的ap 信息
+### station 模式—移除某个或全部已保存的ap 信息
 ```c
 wifi_on(WIFI_STATION);
 wifi_sta_remove_networks(NULL/ssid);
@@ -1500,7 +1500,7 @@ wifi_sta_remove_networks(NULL/ssid);
 该函数要配合wifi_sta_list_networks函数来使用，调用wifi_sta_list_networks函数列出已保存的ap信息，再根据信息来移除不需要的ap。如果wifi_sta_remove_networks传入的参数是一个具体的ssid，那么仅仅移除该ssid的信息，如果传入的参数是一个NULL指针，那么把所有的已保存的ap信息都删掉。
 ```
 
-#### ap 模式—启动ap 节点
+### ap 模式—启动ap 节点
 
 ```c
 wifi_on(WIFI_AP);
@@ -1511,7 +1511,7 @@ wifi_ap_enable(&ap_config);
 如果想启动无密码ap，需要把ap_config结构体中的psk字段填充“NULL”字符串。其它字段按实际需求填写
 ```
 
-#### ap 模式—获取ap 配置信息
+### ap 模式—获取ap 配置信息
 
 ```c
 wifi_on(WIFI_AP);
@@ -1523,7 +1523,7 @@ wifi_ap_get_config(&ap_config);
 备注: 无
 ```
 
-#### ap 模式—关闭ap 热点
+### ap 模式—关闭ap 热点
 
 ```c
 wifi_on(WIFI_AP);
@@ -1535,7 +1535,7 @@ wifi_ap_disable(void);
 备注: 无
 ```
 
-#### monitor 模式—使用monitor 功能
+### monitor 模式—使用monitor 功能
 
 ```c
 wifi_on(WIFI_MONITOR);
@@ -1545,7 +1545,7 @@ wifi_monitor_enable(channel);
 备注: channel指的是监听哪条信道
 ```
 
-#### monitor 模式—切换监听的信道
+### monitor 模式—切换监听的信道
 
 ```c
 wifi_on(WIFI_MONITOR);
@@ -1557,7 +1557,7 @@ wifi_monitor_set_channel(channel);
 备注: 无
 ```
 
-#### monitor 模式—关闭monitor 功能
+### monitor 模式—关闭monitor 功能
 
 ```c
 wifi_on(WIFI_MONITOR);
@@ -1569,7 +1569,7 @@ wifi_monitor_disable(void);
 备注: 无
 ```
 
-#### p2p 模式—启动p2p 功能
+### p2p 模式—启动p2p 功能
 
 ```c
 wifi_on(WIFI_P2P);
@@ -1579,7 +1579,7 @@ wifi_p2p_enable(&p2p_config);
 备注: 启动p2p功能时可以对p2p设备名，协商等级等一下参数进行设置
 ```
 
-#### p2p 模式—关闭p2p 功能
+### p2p 模式—关闭p2p 功能
 
 ```c
 wifi_on(WIFI_P2P);
@@ -1591,7 +1591,7 @@ wifi_p2p_disable(void);
 备注: 无
 ```
 
-#### p2p 模式—扫描周围p2p 设备
+### p2p 模式—扫描周围p2p 设备
 
 ```c
 wifi_on(WIFI_P2P);
@@ -1601,7 +1601,7 @@ wifi_p2p_find(&p2p_peers, find_second);
 备注: 对端设备也必须处于扫描状态才能被发现
 ```
 
-#### p2p 模式—连接某个p2p 设备
+### p2p 模式—连接某个p2p 设备
 
 ```c
 wifi_on(WIFI_P2P);
@@ -1613,7 +1613,7 @@ wifi_p2p_connect(p2p_mac_addr);
 备注: 在连接前必须进行扫描，只有相互发现后才能连接成功
 ```
 
-#### p2p 模式—断开与p2p 设备的连接
+### p2p 模式—断开与p2p 设备的连接
 
 ```c
 wifi_on(WIFI_P2P);
@@ -1627,7 +1627,7 @@ wifi_p2p_disconnect(uint8_t *p2p_mac_addr);
 备注: 无
 ```
 
-#### p2p 模式—获取p2p 设备信息
+### p2p 模式—获取p2p 设备信息
 
 ```c
 wifi_on(WIFI_P2P);
@@ -1641,7 +1641,7 @@ wifi_p2p_get_info(&p2p_info);
 备注: 无
 ```
 
-#### 任意模式—获取mac 地址
+### 任意模式—获取mac 地址
 
 ```c
 wifi_on(XXX);
@@ -1652,7 +1652,7 @@ wifi_get_mac(ifname, mac_addr);
 用户需要申请空间mac_addr来保存获取到的mac地址，ifname是网卡名，如果传入的网卡名为NULL，那么底层逻辑默认获取wlan0网卡的mac地址
 ```
 
-#### 任意模式—设置mac 地址
+### 任意模式—设置mac 地址
 
 ```c
 wifi_on(XXX);
@@ -1663,7 +1663,7 @@ wifi_set_mac(ifname, mac_addr);
 用户需要申请空间mac_addr来保存获取到的mac地址，ifname是网卡名，如果传入的网卡名为NULL，那么底层逻辑默认设置wlan0网卡的mac地址，设置网卡的mac地址是临时性的，重启后设置的mac地址会失效。
 ```
 
-#### 任意模式—获取打印等级
+### 任意模式—获取打印等级
 
 ```c
 wmg_get_debug_level();
@@ -1672,7 +1672,7 @@ wmg_get_debug_level();
 该函数不需要调用wifi_on即可调用
 ```
 
-#### 任意模式—设置打印等级
+### 任意模式—设置打印等级
 
 ```c
 wmg_set_debug_level(XXX);
@@ -1681,11 +1681,11 @@ wmg_set_debug_level(XXX);
 该函数不需要调用wifi_on即可调用
 ```
 
-### Wi-Fi Manager 配网模式
+## Wi-Fi Manager 配网模式
 
 wifimager 集成了smartlink 部分的配网功能，便于用户使用，用户只需要使用wifimager 提供的demo 即可进行配网功能，无需额外再使用smartlink。
 
-#### wifimager 配网模式简介
+### wifimager 配网模式简介
 
 目前wifimager 支持sofap，蓝牙，xconfig 和声波配网4 种配网模式。所有的配网模式实质上都只包含了2 部分。
 1. 获取连接ap 的ssid 和psk
@@ -1742,9 +1742,9 @@ Wi-Fi Manager demo 的主要目录结构如下：
 ```
 
 
-### Wi-Fi Manager demo 快速测试命令简介
+## Wi-Fi Manager demo 快速测试命令简介
 
-#### station 模式常用命令
+### station 模式常用命令
 
 | 测试命令                 | 解释说明                         |
 | ------------------------ | -------------------------------- |
@@ -1758,7 +1758,7 @@ Wi-Fi Manager demo 的主要目录结构如下：
 
 > ssid 网络名，passwd 密码，在使用 sta 模式其他命令前先要执行wifi ‑o sta 打开sta 模式。
 
-#### ap 模式常用命令
+### ap 模式常用命令
 
 | 测试命令                   | 解释说明                    |
 | -------------------------- | --------------------------- |
@@ -1767,13 +1767,13 @@ Wi-Fi Manager demo 的主要目录结构如下：
 
 > ssid 网络名，passwd 密码，在使用ap 模式其他命令前先要执行wifi ‑o ap 打开ap 模式。
 
-#### monitor 模式常用命令
+### monitor 模式常用命令
 
 | 测试命令        | 解释说明                        |
 | --------------- | ------------------------------- |
 | wifi ‑o monitor | 以monitor 模式打开Wi-Fi Manager |
 
-#### 额外功能常用命令
+### 额外功能常用命令
 
 | 测试命令                                             | 解释说明          |
 | ---------------------------------------------------- | ----------------- |
