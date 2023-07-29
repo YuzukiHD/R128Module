@@ -65,6 +65,9 @@
   - [Smart Card](sdk_module/smartcard.md)
   - [SPI](sdk_module/spi.md)
   - [USB](sdk_module/usb.md)
+- DSP 
+  - [DSP 简介](dsp/dsp_intro.md)
+  - [DSP开发工具安装](dsp/dsp_sdk.md)
 - 调试指南
   - [RTOS调试指南](debug/debug_info.md)
   - [使用 VSCode 调试代码](debug/vsc_debug_info.md)
