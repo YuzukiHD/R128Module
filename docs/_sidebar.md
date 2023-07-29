@@ -65,7 +65,8 @@
   - [SPI](sdk_module/spi.md)
   - [USB](sdk_module/usb.md)
 - 调试指南
-  - [调试指南](debug/debug_info.md)
+  - [RTOS调试指南](debug/debug_info.md)
+  - [使用 VSCode 调试代码](debug/vsc_debug_info.md)
   - [内存泄漏](debug/memleak.md)
 - 其他
   - [FAQ](others/faq.md)
