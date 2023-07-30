@@ -30,6 +30,7 @@
   - [PMU 配置](peripheral/pmu.md)
 - 应用开发案例
   - [LVGL](demo/lvgl.md)
+  - [驱动 WS2812 流水灯](demo/ws2812.md)
 - 基础组件开发指南
   - [多媒体解码](sdk_base/multimedia_dec.md)
   - [多媒体编码](sdk_base/multimedia_enc.md)
