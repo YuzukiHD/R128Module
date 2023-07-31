@@ -1,6 +1,7 @@
 - [主页](README.md)
 - 概述
   - [芯片简介](r128/about_chip.md)
+  - [芯片参数](r128/chip_info.md)
   - [获取芯片资料](r128/get_chip_ds.md)
   - [测试固件下载](r128/test_img.md)
 - 硬件设计
