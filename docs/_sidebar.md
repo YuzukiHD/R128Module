@@ -37,6 +37,8 @@
   - [多媒体编码](sdk_base/multimedia_enc.md)
   - [音频框架](sdk_base/audio.md)
   - [显示框架](sdk_base/disp.md)
+  - [图形界面](sdk_base/graphic.md)
+  - [图像采集](sdk_base/video_capture.md)
   - [安全](sdk_base/sos.md)
   - [蓝牙](sdk_base/bluetooth.md)
   - [Wi-Fi](sdk_base/wifi.md)
