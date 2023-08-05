@@ -28,7 +28,6 @@
   - [RTOS 使用说明](r128/rtos_manual.md)
   - [SDK架构](r128/sdk_tree.md)
   - [编写HelloWorld](r128/hello_world.md)
-  - [点亮一颗 LED 灯](r128/led_and_chihui.md)
 
 - 软件配置
   - [引脚复用配置](sdk_base/gpio_mux.md)
@@ -40,8 +39,16 @@
   - [PMU 配置](peripheral/pmu.md)
 
 - 应用开发案例
-  - [LVGL](demo/lvgl.md)
+  - [点亮一颗 LED 灯](demo/led_and_chihui.md)
+  - [按键输入](demo/keypress.md)
+  - [按键控制蜂鸣器](demo/keypressbuzz.md)
+  - [ADC驱动烟雾传感器](demo/adc_mq2.md)
+  - [中断驱动旋转编码器](demo/int_encoder.md)
   - [驱动 WS2812 流水灯](demo/ws2812.md)
+  - [获取真随机数](demo/trand.md)
+  - [驱动 OLED 屏](demo/oled.md)
+  - [SPI 驱动 TFT LCD 屏](demo/spilcd.md)
+  - [LVGL 与 SPI TFT GUI](demo/lvgl_spi.md)
 
 - 基础组件开发指南
   - [多媒体解码](sdk_base/multimedia_dec.md)
