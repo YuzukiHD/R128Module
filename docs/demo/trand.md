@@ -1,5 +1,9 @@
 # 获取真随机数
 
+| 本文案例代码 | 下载地址 |
+| ---------------------- | -------------------------------------- |
+| 获取真随机数案例代码 | https://www.aw-ol.com/downloads?cat=24 |
+
 R128 内置了TRNG，一个真随机数发生器，随机源是 8 路独立的环形振荡器，由模拟器件电源噪声产生频率抖动，用低频始终重采样，然后进行弹性抽取和熵提取处理，最终输出128bit真随机数。
 
 ## 载入方案
@@ -18,9 +22,8 @@ $ lunch_rtos 1
 运行 `mrtos_menuconfig` 进入配置页面。前往下列地址找到 `TRNG Devices` 
 
 ```
-Kernel Setup --->
-    Drivers Setup --->
-        SoC HAL Drivers --->
+Drivers Options  --->
+    soc related device drivers  --->
         	TRNG Devices --->
         	-*- enable trng driver
 ```
