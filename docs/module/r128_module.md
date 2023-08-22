@@ -16,9 +16,4 @@
 
 ### 引脚图
 
-- [高清引脚图.svg](https://yuzukihd.top/R128Module/assets/info/R128-S2.svg)
-
-```pdf
-/R128Module/assets/info/R128-S2.pdf
-```
-
+- [高清引脚图.svg](https://www.aw-ol.com/downloads?cat=22)
