@@ -583,7 +583,7 @@ adb pull /data/test.bin .
 
 adb local transport port 是用于配置端口号的，用于在adb 网络连接时匹配端口的，默认为5555。
 
-!> 在进行网络adb 连接之前，需要保证PC 和小机端在同一个局域网中，并且可以ping 通。
+> 在进行网络adb 连接之前，需要保证PC 和小机端在同一个局域网中，并且可以ping 通。
 
 小机端运行ifconfig，查看当前小机端的IP，假设IP为192.168.1.101。
 

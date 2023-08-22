@@ -1,17 +1,9 @@
 # 手册与资料
 
-## 芯片手册
-
-- [R128_Product_Brief_V1.2.pdf](https://github.com/YuzukiHD/R128Module/blob/master/docs/assets/datasheets/R128_Product_Brief_V1.2.pdf)
-
-
-
 ## CPU手册
 
 - Arm Cortex-M33 核心手册： [Arm® Cortex®-M33 Processor Technical Reference Manual](https://developer.arm.com/documentation/100230/latest/)
 - XuanTie C906 核心手册：[T-Head XuanTie C906 Processor Datasheet](https://xuantie.t-head.cn/product/xuantie/3817197695983423488)
-
-
 
 ## DSP 相关
 
@@ -22,5 +14,5 @@
 
 
 
-!> 其余手册将在发布后上传
+> 其余手册将在发布后上传
 
