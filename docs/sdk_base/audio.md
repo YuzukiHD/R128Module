@@ -191,7 +191,7 @@ capture_cma = 30720 //录音最大缓存配置
 
 ### 使用方法
 
-!> 假设 AudioCodec-DAC 声卡序号为 0，AudioCodec-ADC 声卡序号为 1。
+> 假设 AudioCodec-DAC 声卡序号为 0，AudioCodec-ADC 声卡序号为 1。
 
 #### 录音
 
@@ -406,7 +406,7 @@ Card Name:snddaudio0.
 
 ### 使用方法
 
-!> 假设 snddaudio0 声卡序号为 2
+> 假设 snddaudio0 声卡序号为 2
 
 #### 录音
 
@@ -687,7 +687,7 @@ Drivers Options --->
                 	[*] Allwinner MAD Support
 ```
 
-!> 需要同时使能录音源模块驱动才可正常工作，如录音源为AudioCodec，则需使能AudioCodec 驱动。
+> 需要同时使能录音源模块驱动才可正常工作，如录音源为AudioCodec，则需使能AudioCodec 驱动。
 
 ### 声卡控件
 
@@ -966,7 +966,7 @@ struct sunxi_codec_info {
 
 ## 软件重要接口
 
-!> 仅说明自定义软件接口，alsa 框架内部接口不做说明。
+> 仅说明自定义软件接口，alsa 框架内部接口不做说明。
 
 ### pcm 相关接口
 
@@ -2153,7 +2153,7 @@ static const snd_pcm_softvol_config_t snd_pcm_softvol_config = {
 - max_dB: 最大衰减
 - resolution: 精度
 
-!> 注意, 在第一次使用 softvol 插件进行播放时才会生成该控件; 如果想要在声卡驱动加载的时候就添加该控件，请修改对应的 codec 文件，例如 `SND_CTL_KCONTROL_USER("Soft Volume Master", 255, 0, 255)`
+> 注意, 在第一次使用 softvol 插件进行播放时才会生成该控件; 如果想要在声卡驱动加载的时候就添加该控件，请修改对应的 codec 文件，例如 `SND_CTL_KCONTROL_USER("Soft Volume Master", 255, 0, 255)`
 
 #### asym 插件
 
@@ -2409,7 +2409,7 @@ pcm_cap_periods = 4
 pcm_cap_card = "hw:audiocodecadc" //录音声卡名称
 ```
 
-!> 请根据实际使用需求配置参数，不要随意设置参数，否则会导致录音或播放失败，因为驱动会限制 periods，period_size 还有buffer_bytes 的最小值和最大值。如果录音出现 overrun，可以尝试增大 periods，不要随意修改 period_size。
+> 请根据实际使用需求配置参数，不要随意设置参数，否则会导致录音或播放失败，因为驱动会限制 periods，period_size 还有buffer_bytes 的最小值和最大值。如果录音出现 overrun，可以尝试增大 periods，不要随意修改 period_size。
 
 ### 音频接口
 
@@ -2443,7 +2443,7 @@ tAudioTrack *AudioTrackCreate(const char *name)
 
 - 成功则返回AudioTrack句柄，失败返回NULL。
 
-!> name 参数可支持的值，可以通过 ahw_list 命令查看, 例如 default,amp 也可以在代码中自定义添加需要的名称，详情可以参考 audio_hw/audio_hw.c 中的 add_default_ahw 函数
+> name 参数可支持的值，可以通过 ahw_list 命令查看, 例如 default,amp 也可以在代码中自定义添加需要的名称，详情可以参考 audio_hw/audio_hw.c 中的 add_default_ahw 函数
 
 ##### 创建指定音频流类型的 AudioTrack
 
@@ -2460,7 +2460,7 @@ tAudioTrack *AudioTrackCreateWithStream(const char *name, uint16_t type)
 
 - 成功则返回AudioTrack句柄，失败返回NULL。
 
-!> 如果使用 AudioTrackCreate 接口，默认使用的音频流类型是 AUDIO_STREAM_SYSTEM 音频流音量曲线在 audio_plugin/softvolume.c 里面定义, 可以参考 softvol_stream_init 函数默认加载了两种类型的曲线。
+> 如果使用 AudioTrackCreate 接口，默认使用的音频流类型是 AUDIO_STREAM_SYSTEM 音频流音量曲线在 audio_plugin/softvolume.c 里面定义, 可以参考 softvol_stream_init 函数默认加载了两种类型的曲线。
 
 ##### 设置 AudioTrack 相关音频参数
 
@@ -2509,7 +2509,7 @@ int AudioTrackStart(tAudioTrack *at)
 
 - 成功则返回0,否则返回error code
 
-!> 放音流程中不一定要执行 AudioTrackStart 函数，因为在调用 AudioTrackWrite 的时候，内部会根据状态自动调用 start 的。
+> 放音流程中不一定要执行 AudioTrackStart 函数，因为在调用 AudioTrackWrite 的时候，内部会根据状态自动调用 start 的。
 
 ##### 停止 AudioTrack
 
@@ -2622,7 +2622,7 @@ int AudioRecordStart(tAudioRecord *ar)
 
 - 成功则返回0,否则返回error code
 
-!> 放音流程中不一定要执行 AudioRecordStart 函数，因为在调用 AudioRecordRead 的时候，内部会根据状态自动调用 start
+> 放音流程中不一定要执行 AudioRecordStart 函数，因为在调用 AudioRecordRead 的时候，内部会根据状态自动调用 start
 
 ##### 停止 AudioRecord
 
@@ -2674,7 +2674,7 @@ int AudioSystemInit(void)
 
 - 成功则返回0,否则返回error code
 
-!> AudioSystemInit 一般在 os 的初始化流程中调用 (例如 main.c 中)
+> AudioSystemInit 一般在 os 的初始化流程中调用 (例如 main.c 中)
 
 ##### 软件音量控制接口
 
@@ -2692,7 +2692,7 @@ int softvol_control_with_streamtype(int stream_type, uint32_t *vol_index, int16_
 
 - 成功则返回0,否则返回error code
 
-!> 当 mode 为 2 时，vol_index 的值表示音量范围，低 16bit 表示最小值，高 16bit 表示最大值。
+> 当 mode 为 2 时，vol_index 的值表示音量范围，低 16bit 表示最小值，高 16bit 表示最大值。
 
 ####  AudioSystem 接口示例
 
@@ -3432,7 +3432,7 @@ as_test ‑s 0 ‑n playback /usb_msc/test.wav
 
 如果更新了 HW EQ 参数，需要更新配置文件 R128EQ‑5band.conf 或 R128EQ‑20band.conf 到data/UDISK 目录下。
 
-!> 因为是硬件 EQ 是配置寄存器，所以只有开机后第一次播放音乐会生效，没有必要每次播放都更新硬件寄存器。如果更新了 HW EQ 参数，就要重启后，再次播放音乐生效
+> 因为是硬件 EQ 是配置寄存器，所以只有开机后第一次播放音乐会生效，没有必要每次播放都更新硬件寄存器。如果更新了 HW EQ 参数，就要重启后，再次播放音乐生效
 
 ## 常用调试方法
 
@@ -3458,7 +3458,7 @@ reg_write 0x5096010 0x80004000
 
 #### PC 端通过脚本，实时获取录音数据
 
-!> PC 上使用脚本录音，需要对应 python2.0 的版本。如果使用更高版本的 python，需要修改代码。最终保存的文件是 pcm 数据。
+> PC 上使用脚本录音，需要对应 python2.0 的版本。如果使用更高版本的 python，需要修改代码。最终保存的文件是 pcm 数据。
 
 准备一个 adb_record.py 写入以下脚本
 
@@ -3864,7 +3864,7 @@ AudioRecordReadRM failed!!, return ‑1
 - I2S/PCM，SPDIF，DMIC 模块：
   - 可选择不进行 pin 功能复用配置，该情况仍可生成声卡，但引脚无实际输入输出功能。
 
-!> 驱动会直接从配置文件获取节点的所有引脚，与引脚的名称无关
+> 驱动会直接从配置文件获取节点的所有引脚，与引脚的名称无关
 
 ```
 # port:端口+组内序号<功能分配><内部电阻状态><驱动能力><输出电平状态> 

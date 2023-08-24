@@ -1330,7 +1330,7 @@ rpdata_t *rpdata_create(int dir, const char *type, const char *name, size_t buf_
 
 - 成功则返回rpdata句柄，失败返回NULL。
 
-!> type 和 name 用于标识唯一的传输通道, 可自行设定，长度不超过 16 个字节即可。可以通过 rpd ‑l 命令查看当前已经申请的 rpdata 以及对应的状态。rpdata_create 函数不会阻塞。在创建的时候，可以直接调用。
+> type 和 name 用于标识唯一的传输通道, 可自行设定，长度不超过 16 个字节即可。可以通过 rpd ‑l 命令查看当前已经申请的 rpdata 以及对应的状态。rpdata_create 函数不会阻塞。在创建的时候，可以直接调用。
 
 #### 连接 rpdata
 
@@ -1348,7 +1348,7 @@ rpdata_t *rpdata_connect(int dir, const char *type, const char *name)
 
 - 成功则返回rpdata句柄，失败返回NULL。
 
-!> rpdata_create 和 rpdata_connect 作用是类似的，但是前者会创建用于传输数据的 buffer，后者不会。因此两核之间通信，必须分别使用这两个接口，而不能共同使用 rpdata_create 或者 rpdata_connect。rpdata_connect 函数会阻塞。如果远核没有调用 rpdata_create，那么就会一直阻塞线程。注意使用 rpdata_connect，如果
+> rpdata_create 和 rpdata_connect 作用是类似的，但是前者会创建用于传输数据的 buffer，后者不会。因此两核之间通信，必须分别使用这两个接口，而不能共同使用 rpdata_create 或者 rpdata_connect。rpdata_connect 函数会阻塞。如果远核没有调用 rpdata_create，那么就会一直阻塞线程。注意使用 rpdata_connect，如果
 需要等待远端线程，请确认该线程是否可以阻塞，不行的话，需要使用线程单独等待。
 
 #### 得到 buffer 的值
@@ -1365,7 +1365,7 @@ void *rpdata_buffer_addr(rpdata_t *rpd)
 
 - buff的值
 
-!> 该 buffer 地址可用于保存要传输交互的数据
+> 该 buffer 地址可用于保存要传输交互的数据
 
 #### 判断 rpdata 是否为连接状态
 
@@ -1395,7 +1395,7 @@ int rpdata_wait_connect(rpdata_t *rpd)
 
 - 成功则返回0，失败返回非0。
 
-!> 需要判断等待 rpdata 为连接状态后，才可以开始数据传输。
+> 需要判断等待 rpdata 为连接状态后，才可以开始数据传输。
 
 #### 跨核数据处理
 
@@ -1417,7 +1417,7 @@ int rpdata_process(rpdata_t *rpd, unsigned int offset, unsigned int data_len)
 
 - 成功则返回0，失败返回非0。
 
-!> 处理后的结果会存于 buffer 中，即 rpdata_buffer_addr 得到的地址。
+> 处理后的结果会存于 buffer 中，即 rpdata_buffer_addr 得到的地址。
 
 #### 跨核数据发送
 
@@ -1439,7 +1439,7 @@ int rpdata_send(rpdata_t *rpd, unsigned int offset, unsigned int data_len)
 
 - 成功则返回0，失败返回非0。
 
-!> rpdata_send 只是把 buffer 中数据发送到远端核，而 rpdata_process 会得到处理后数据
+> rpdata_send 只是把 buffer 中数据发送到远端核，而 rpdata_process 会得到处理后数据
 
 #### 接受跨核传输的数据
 
@@ -1461,7 +1461,7 @@ int rpdata_recv(rpdata_t *rpd, unsigned int *offset, unsigned int *data_len, int
 
 - 成功则返回0，失败返回非0。
 
-!> 使用该接口，需要增加 ringbuffer 模式，否则有可能会出现数据覆盖的现象。
+> 使用该接口，需要增加 ringbuffer 模式，否则有可能会出现数据覆盖的现象。
 
 #### 设置数据接受回调
 
@@ -1484,7 +1484,7 @@ int rpdata_set_recv_cb(rpdata_t *rpd, struct rpdata_cbs *cbs)
 int (recv_cb_t)(rpdata_t rpd, void *data, int data_len)
 ```
 
-!> 注意在该回调用把数据处理好，或者拷贝出来，否则有可能会被下次数据传输覆盖
+> 注意在该回调用把数据处理好，或者拷贝出来，否则有可能会被下次数据传输覆盖
 
 #### 销毁 rpdata
 
@@ -1500,7 +1500,7 @@ int rpdata_destroy(rpdata_t *rpd)
 
 - 成功则返回0，失败返回非0。
 
-!> 只有两核都调用 rpdata_destroy 才会真正的销毁，但对调用顺序不做要求。
+> 只有两核都调用 rpdata_destroy 才会真正的销毁，但对调用顺序不做要求。
 
 ### rpdata 使用流程
 
