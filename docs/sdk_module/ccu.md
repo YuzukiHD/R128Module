@@ -299,7 +299,7 @@ u32 hal_clk_round_rate(hal_clk_t clk, u32 rate);
 
 ### 获取指定时钟频率
 
-!> 可能非实时
+> 可能非实时
 
 函数原型
 
