@@ -850,7 +850,7 @@ lcd_gpio_3              = port:PA21<8><0><3><0>
 
 同样与并行 RGB 接口一样，配置中并不需要也无法体现具体是哪种串行 RGB 接口，你要做的就是把硬件连接对就行。
 
-!> 这里需要注意的是，对于该接口，SoC 总共需要三个周期才能发完一个 pixel，所以我们配置时序的时候，需要满足 `lcd_dclk_freq*3=lcd_ht*lcd_vt60`，或者 `lcd_dclk_freq=lcd_ht/3*lcd_vt*60` 要么 3 倍 `lcd_ht` 要么 3 倍 `lcd_dclk_freq`。
+> 这里需要注意的是，对于该接口，SoC 总共需要三个周期才能发完一个 pixel，所以我们配置时序的时候，需要满足 `lcd_dclk_freq*3=lcd_ht*lcd_vt60`，或者 `lcd_dclk_freq=lcd_ht/3*lcd_vt*60` 要么 3 倍 `lcd_ht` 要么 3 倍 `lcd_dclk_freq`。
 
 ## I8080 接口
 
@@ -1144,7 +1144,7 @@ lcd_bl_en = port:PD24<1><2><default><1>
 
 比如 lcd_bl_50_percent = 60，表明将 50% 的亮度值调整成 60%，即亮度比原来提高 10%。
 
-!> 修改此属性不当可能导致背光调节效果差。
+> 修改此属性不当可能导致背光调节效果差。
 
 #### lcd_backlight
 
@@ -1152,7 +1152,7 @@ lcd_bl_en = port:PD24<1><2><default><1>
 
 此属性决定在 uboot 显示 logo 阶段的亮度，进入都内核时则是读取保存的配置来决定亮度。
 
-!> 显示 logo 阶段，一般来说需要比较亮的亮度，业内做法都是如此。
+> 显示 logo 阶段，一般来说需要比较亮的亮度，业内做法都是如此。
 
 ### 显示效果相关参数
 
