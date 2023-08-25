@@ -1,4 +1,4 @@
-# CMOS sensor interface
+# CSI
 
 介绍sunxi 平台RTOS 上CSI_JPEG 驱动hal 的一般使用方法及调试接口，为开发与调试提供参考。
 
