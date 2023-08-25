@@ -100,7 +100,7 @@ void registerCallback(void* handle, void* userData, player_callback_t fn)
 
 - 无
 
-!> 创建完 rtplayer 播放器之后，就要调用该函数设置回调消息处理函数。
+> 创建完 rtplayer 播放器之后，就要调用该函数设置回调消息处理函数。
 
 ### 设置播放文件的 url
 
@@ -155,7 +155,7 @@ status_t prepareAsync(void* handle)
 
 - 成功返回 0，失败返回‑1
 
-!> 该函数是非阻塞函数，需要等到 RTPLAYER_NOTIFY_P‑ REPARED 消息回调之后才能调 start() 函数进行播放，而且 start() 函数不能在回调函数中调用
+> 该函数是非阻塞函数，需要等到 RTPLAYER_NOTIFY_P‑ REPARED 消息回调之后才能调 start() 函数进行播放，而且 start() 函数不能在回调函数中调用
 
 ### 开始播放
 
@@ -221,7 +221,7 @@ status_t reset(void* handle)
 
 - 成功返回 0，失败返回‑1
 
-!> 在任何状态下都可以调用该函数，每次播放不同的音频之前，都需要调用该函数重置播放器，另外，一般收到 RTPLAYER_NOTIFY_MEDIA_ERROR 这个消息的时候，也需要通过调用该函数来重置播放器。但是不能在回调函数中调用该函数，否则会出现死锁
+> 在任何状态下都可以调用该函数，每次播放不同的音频之前，都需要调用该函数重置播放器，另外，一般收到 RTPLAYER_NOTIFY_MEDIA_ERROR 这个消息的时候，也需要通过调用该函数来重置播放器。但是不能在回调函数中调用该函数，否则会出现死锁
 
 ### 跳播
 
@@ -274,7 +274,7 @@ status_t getDuration(void* handle, int * sec)
 
 - 成功返回 0，失败返回‑1
 
-!> 需要在 prepared 状态之后才可以调用该函数
+> 需要在 prepared 状态之后才可以调用该函数
 
 ### 获取播放的文件信息
 
@@ -292,7 +292,7 @@ MediaInfo* getMediaInfo(void* handle)
 
 - 成功返回 0，失败返回‑1
 
-!> 需要在 prepared 状态之后才可以调用该函数
+> 需要在 prepared 状态之后才可以调用该函数
 
 ### 设置循环播放模式
 
@@ -347,7 +347,7 @@ int XPlayerSetNotifyCallback(XPlayer* p, XPlayerNotifyCallback notifier, void* p
 
 - 成功：XPlayer 指针；失败：NULL
 
-!> Xplayer 将接收来自下层的回调通知，进行相应的操作
+> Xplayer 将接收来自下层的回调通知，进行相应的操作
 
 ### 创建指向音频播放设备管理模块的指针，用于播放音频
 
@@ -383,7 +383,7 @@ int XPlayerSetDataSourceUrl(XPlayer* p, const char* pUrl, void* httpService, con
 
 - 返回值: 成功：0；失败：‑1 或线程响应设置数据源命令的返回值或线程响应 xplayer prepare 命令的返回值
 
-!> 调用说明: 发送 SetDataSource 命令，获取需要播放的音频数据内容
+> 调用说明: 发送 SetDataSource 命令，获取需要播放的音频数据内容
 
 ### 将 XPlayer 置为准备状态, 解析头部信息，获取元数据
 
@@ -401,7 +401,7 @@ int XPlayerPrepare(XPlayer* p)
 
 - 成功：线程响应异步 Prepare 命令的返回值；失败：NULL
 
-!> 该函数是阻塞函数，调用完返回之后就进入了 Prepared 状态，此时可调 XPlayerStart() 函数进行播放
+> 该函数是阻塞函数，调用完返回之后就进入了 Prepared 状态，此时可调 XPlayerStart() 函数进行播放
 
 ### 将 XPlayer 置为异步准备状态
 
@@ -419,7 +419,7 @@ int XPlayerPrepareAsync(XPlayer* p)
 
 - 成功：线程响应异步 Prepare 命令的返回值；失败：NULL
 
-!>  网络播放源一般采用 PrepareAsync，而不是 Prepare 命令，PrepareAsync 命令的返回值为 0 时说明响应成功，播放器准备工作已经完成可以开始播放，为‑1 时说明响应失败
+>  网络播放源一般采用 PrepareAsync，而不是 Prepare 命令，PrepareAsync 命令的返回值为 0 时说明响应成功，播放器准备工作已经完成可以开始播放，为‑1 时说明响应失败
 
 ### 将 XPlayer 置为启动状态
 
@@ -437,7 +437,7 @@ int XPlayerStart(XPlayer* p)
 
 - 成功：线程响应 start 命令的返回值；失败：NULL
 
-!> Start 命令的返回值为 0 时说明响应成功，为‑1 时说明响应失败
+> Start 命令的返回值为 0 时说明响应成功，为‑1 时说明响应失败
 
 ### 将 XPlayer 置为暂停状态
 
@@ -455,7 +455,7 @@ int XPlayerPause(XPlayer* p)
 
 - 成功：线程响应 pause 命令的返回值；失败：NULL
 
-!> 在 XPlayer 处于 start 状态时可调用此接口，Pause 命令的返回值为 0 时说明响应成功，为‑1 时说明响应失败
+> 在 XPlayer 处于 start 状态时可调用此接口，Pause 命令的返回值为 0 时说明响应成功，为‑1 时说明响应失败
 
 ### 将 XPlayer 置为停止状态
 
@@ -491,7 +491,7 @@ int XPlayerReset(XPlayer* p)
 
 - 成功：线程响应 Reset 命令的返回值；失败：NULL
 
-!>  Reset 命令的返回值为 0 时说明响应成功，为‑1 时说明响应失败
+>  Reset 命令的返回值为 0 时说明响应成功，为‑1 时说明响应失败
 
 ### 获取节目时长
 
@@ -510,7 +510,7 @@ int XPlayerGetDuration(XPlayer* p, int *msec)
 
 - 成功：0；失败：‑1
 
-!> 在 XPlayer 处于 PREPARED、STARTED、PAUSED、STOPPED 或 COMPLETE 状态下才可调用此接口，否则操作无效
+> 在 XPlayer 处于 PREPARED、STARTED、PAUSED、STOPPED 或 COMPLETE 状态下才可调用此接口，否则操作无效
 
 ###  Seek 到给定的时间点
 
@@ -529,7 +529,7 @@ int XPlayerSeekTo(XPlayer* p, int nSeekTimeMs)
 
 -  成功：线程响应 Seek 命令的返回值；失败：NULL
 
-!> 如果跳转前播放处于暂停状态，则跳转后将保持在暂停状态
+> 如果跳转前播放处于暂停状态，则跳转后将保持在暂停状态
 
 ### 获取媒体文件的总时长
 
@@ -548,7 +548,7 @@ int XPlayerGetDuration(XPlayer* p, int *msec)
 
 - 成功：0；失败：‑1
 
-!> 需要在 prepared 状态之后才可以调用该函数
+> 需要在 prepared 状态之后才可以调用该函数
 
 ### 获取当前的播放时间点（即播放位置）
 
@@ -585,7 +585,7 @@ MediaInfo* XPlayerGetMediaInfo(XPlayer* p)
 
 - 成功返回 0，失败返回‑1。如果失败，则 mediaInfo 指针为 NULL
 
-!> 需要在 prepared 状态之后才可以调用该函数
+> 需要在 prepared 状态之后才可以调用该函数
 
 ### 设置循环播放模式
 

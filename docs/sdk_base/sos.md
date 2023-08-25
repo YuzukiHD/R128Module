@@ -162,7 +162,7 @@ System components ‑‑‑>
             [*] TFM support
 ```
 
-!> 只有安全固件需要开始 TFM，非安全固件需要关闭，且仅有 M33 支持 TFM。
+> 只有安全固件需要开始 TFM，非安全固件需要关闭，且仅有 M33 支持 TFM。
 
 ### 启动流程
 
@@ -218,15 +218,15 @@ R128 整个安全启动过程中，以 efuse 中的根公钥 hash 为起点，�
 
 4. 对于 Nand 方案支持 Dragon SN 工具烧写 rotpk.bin 到设备的 efuse 中。
 
-!> efuse 的硬件特性决定了 efuse 中每个 bit 仅能烧写一次。此外，efuse 中会划分出很多区域，大部分区域也只能烧写一次。详细请参考芯片 SID 规范。
+> efuse 的硬件特性决定了 efuse 中每个 bit 仅能烧写一次。此外，efuse 中会划分出很多区域，大部分区域也只能烧写一次。详细请参考芯片 SID 规范。
 
 
 
-!> 烧写 secure enable bit 后，会让设备变成安全设备，此操作是不可逆的。后续将只能启动安全固件，启动不了非安全固件。
+> 烧写 secure enable bit 后，会让设备变成安全设备，此操作是不可逆的。后续将只能启动安全固件，启动不了非安全固件。
 
 
 
-!> 如果既烧写了 secure enable bit，又烧写了 rotpk.bin，设备就只能启动与 rotpk.bin 对应密钥签名的安全固件；如果只烧写 secure enable bit，没有烧写 rotpk.bin，此设备上烧写的任何安全固件都可以启动。调试时可只烧写 secure enable bit，但是设备出厂前必须要烧写 rotpk.bin。
+> 如果既烧写了 secure enable bit，又烧写了 rotpk.bin，设备就只能启动与 rotpk.bin 对应密钥签名的安全固件；如果只烧写 secure enable bit，没有烧写 rotpk.bin，此设备上烧写的任何安全固件都可以启动。调试时可只烧写 secure enable bit，但是设备出厂前必须要烧写 rotpk.bin。
 
 ### 防回退
 
@@ -240,7 +240,7 @@ R128 支持防止固件版本回退，打包过程中会根据配置文件image_
 
 sboot 启动过程中，如果发现 efuse 的版本小于 Image Header 中的版本，则将此版本信息写入到efuse 中的 NV 区域
 
-!> 安全固件最多支持更新 32 个版本。
+> 安全固件最多支持更新 32 个版本。
 
 ### 安全量产方法
 
@@ -294,7 +294,7 @@ uint32_t tfm_sunxi_nsc_func(Callback_t pxCallback);
 
 
 
-!> 调用说明: 该函数用于安全非安全交互测试，在非安全端调用该函数之后，会切换到安全端，该函数在安全端会调用传入的非安全端 API 接口指针。
+> 调用说明: 该函数用于安全非安全交互测试，在非安全端调用该函数之后，会切换到安全端，该函数在安全端会调用传入的非安全端 API 接口指针。
 
 
 
@@ -333,7 +333,7 @@ int tfm_sunxi_aes_with_hardware(crypto_aes_req_ctx_t *aes_ctx);
 
 - 仅返回 0：无意义
 
-!> 调用说明: 调用之前，请注意对待加解密所需的数据密钥进行对应的 cache 操作
+> 调用说明: 调用之前，请注意对待加解密所需的数据密钥进行对应的 cache 操作
 
 #### 在安全端设置 flashenc 所需的 nonce 值
 
