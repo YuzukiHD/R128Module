@@ -129,7 +129,7 @@ int hal_efuse_set_security_mode(void)
 - 0：成功
 - 负数：失败
 
-!> 开启 **efuse** 中 **secure enable bit** 之后，芯片会变成安全芯片，此过程不可逆，开启时请额外注意。
+> 开启 **efuse** 中 **secure enable bit** 之后，芯片会变成安全芯片，此过程不可逆，开启时请额外注意。
 
 ### 读取 secure enable bit 状态接口
 
