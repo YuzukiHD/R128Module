@@ -34,8 +34,8 @@ PDF文档下载：https://github.com/YuzukiHD/R128Module/releases
 
 | 文档   | 版本  |
 | ------ | ----- |
-| 网页端 | 0.4.6 |
-| PDF    | 0.4.6 |
+| 网页端 | 0.4.7 |
+| PDF    | 0.4.7 |
 
 ## 文档约定
 
