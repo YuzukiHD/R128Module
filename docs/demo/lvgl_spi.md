@@ -2,7 +2,7 @@
 
 本次使用的是 Dshan_Display Module，如下图：
 
-![img](assets/post/lvgl_spi/O1CN01EnnPfh1adisHYyi4d_!!0-item_pic.jpg_Q75.jpg_.webp)
+![img](assets/post/lvgl_spi/222.webp)
 
 引脚配置如下：
 

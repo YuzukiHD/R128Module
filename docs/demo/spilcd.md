@@ -15,7 +15,7 @@ R128 平台提供了 SPI DBI 的 SPI TFT 接口，具有如下特点：
 
 本次使用的是 Dshan_Display Module，如下图：
 
-![img](assets/post/spilcd/O1CN01EnnPfh1adisHYyi4d_!!0-item_pic.jpg_Q75.jpg_.webp)
+![img](assets/post/spilcd/222.webp)
 
 引脚配置如下：
 
