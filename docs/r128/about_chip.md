@@ -17,10 +17,11 @@ R128是一颗专为“音视频解码”而打造的全新高集成度 SoC，主
 
 ## 芯片框图
 
-![image-20230319113235278](assets/post/about_chip/image-20230319113235278.png)
+![R128_Block](assets/post/about_chip/R128_Block.png)
 
 ## 芯片特性简介
 
+```
 - XuanTie 64 bit RISC V C 906 CPU , up to 480 MHz
 - HiFi5 Audio DSP up to 400 MHz
 - Arm M33 Star MCU , up to 192 MHz
@@ -81,6 +82,8 @@ R128是一颗专为“音视频解码”而打造的全新高集成度 SoC，主
 
   - QFN80, 0.35 mm pitch, 8 mm x 8 mm body
 
+```
+
 ## 不同版本芯片的区别
 
 R128 共有R128-S1、R128-S2 和R128-S3 三个型号，各型号具体配置差异如下表：
@@ -93,7 +96,7 @@ R128 共有R128-S1、R128-S2 和R128-S3 三个型号，各型号具体配置差�
 | FLASH          | 8MB                                            | 16MB                                           | /                            |
 | DAC            | 2 Audio DAC<br />LINEOUTLP/N <br />LINEOUTRP/N | 2 Audio DAC<br />LINEOUTLP/N <br />LINEOUTRP/N | 1 Audio DAC<br />LINEOUTLP/N |
 | GPADC Channels | 7                                              | 7                                              | 8                            |
-| Package        | QFN80 8*8mm 0.35pitch                          | QFN80 8*8mm 0.35pitch                          | QFN80 8*8mm 0.35pitch        |
+| Package        | `QFN80 8*8mm 0.35pitch`                        | `QFN80 8*8mm 0.35pitch`                        | `QFN80 8*8mm 0.35pitch`      |
 
-请注意，R128-S1、R128-S2引脚封装是相同的，而 R128-S3 与R128-S1、R128-S2是不同的。具体请参照《R128_PINOUT.xlsx》
+请注意，R128-S1、R128-S2引脚封装是相同的，而 R128-S3 与R128-S1、R128-S2是不同的。具体请参照[芯片参数](/r128/chip_info/)章节
 
