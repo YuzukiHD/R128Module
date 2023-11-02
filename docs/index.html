@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>R128 Online Documents | 在线文档</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <meta name="description" content="Description">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify@4/lib/themes/vue.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.css">
+  <script src="//cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+  <link rel="shortcut icon" href="">
+</head>
+
+<body>
+  <nav>
+    <a href="https://www.aw-ol.com/">社区主页</a>
+    <a href="https://bbs.aw-ol.com/">开发者论坛</a>
+  </nav>
+  <div id="app">加载中...</div>
+  <script>
+    let num = 0;
+    mermaid.initialize({ startOnLoad: false });
+
+    window.$docsify = {
+      name: 'R128 Documents',
+      subMaxLevel: 3,
+      loadSidebar: true,
+	  auto2top: true,
+      count:{
+        countable: true,
+        position: 'top',
+        margin: '10px',
+        float: 'right',
+        fontsize:'0.9em',
+        color:'rgb(90,90,90)',
+        language:'chinese',
+        localization: {
+          words: "",
+          minute: ""
+        },
+        isExpected: true
+      },
+    };
+
+    window.$docsify.customPageTitle = {
+        prefix:     false,      // [optional] title prefix. default: false eg: prefix: "Application"
+        suffix:     'R128 Documents',      // [optional] title suffix. default: false eg: suffix: "v1.0.0"
+        seprator:   '|',        // [optional] seprator for title eg: title->   prefix | title | suffix
+        debug:      false,      // [optional] should debug
+    };
+  </script>
+  <!-- Docsify v4 -->
+  <script src="//cdn.jsdelivr.net/npm/docsify@4"></script>
+  <script src="//cdn.jsdelivr.net/npm/docsify-copy-code"></script>
+  <script src="//cdn.jsdelivr.net/npm/docsify-count@latest/dist/countable.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/zoom-image.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-bash.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-c.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/external-script.min.js"></script>
+  <script src="//unpkg.com/docsify-pagination/dist/docsify-pagination.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/@sujaykumarh/docsify-plugin-title@1.x/dist/plugin.min.js"></script>
+  <script type="module">
+    import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";
+    mermaid.initialize({ startOnLoad: true });
+    window.mermaid = mermaid;
+  </script>
+  <script src="//unpkg.com/docsify-mermaid@2.0.0/dist/docsify-mermaid.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/pdfobject/2.1.1/pdfobject.min.js"></script> 
+  <script src="path-to-file/docsify-pdf-embed.js"></script>
+  <script src="//unpkg.com/docsify-pdf-embed-plugin/src/docsify-pdf-embed.js"></script>
+</body>
+
+</html>
