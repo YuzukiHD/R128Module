@@ -33,4 +33,4 @@ jobs:
           private-ssh-key: ${{ secrets.FTP_SERVER_PASSWD }}
           destination-path: /www/wwwroot/r128.yuzukihd.top/
           source-path: ${{ github.workspace }}/docs/
-          rsync-options: --archive --compress --human-readable --progress --delete-after --exclude=.git* --exclude=.git/ --exclude=.gitignore
+          rsync-options: --archive -O --compress --human-readable --progress --delete-after --exclude=.git* --exclude=.git/ --exclude=.gitignore
