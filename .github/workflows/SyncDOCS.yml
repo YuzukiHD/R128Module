@@ -31,6 +31,6 @@ jobs:
           target-server: ${{ secrets.FTP_SERVER_IP }}
           remote-user: ${{ secrets.FTP_SERVER_USERNAME }}
           private-ssh-key: ${{ secrets.FTP_SERVER_PASSWD }}
-          destination-path: /www/wwwroot/docs.gloomyghost.com/R128Module/
+          destination-path: /www/wwwroot/yuzukihd.top/R128Module/
           source-path: ${{ github.workspace }}/docs/
           rsync-options: --archive --compress --human-readable --progress --delete-after --exclude=.git* --exclude=.git/ --exclude=.gitignore
